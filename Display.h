@@ -3,12 +3,39 @@
 
 #include <ILI9341_t3.h>
 #include <font_Arial.h> // from ILI9341_t3
+#include <font_ArialBold.h>
 #include <XPT2046_Touchscreen.h>
 #include <SPI.h>
 
 #define CS_PIN  8
 #define TFT_DC  9
 #define TFT_CS 10
+
+
+#define DISPLAY_WIDTH		(Display.width())
+#define DISPLAY_HIGH		(Display.height())
+
+#define TEXT_LENGHT(Str)			(Display.strPixelLen(Str))
+
+#define LEFT_ALIGN				0
+#define CENTER_ALIGN(Str)		((DISPLAY_WIDTH - Display.strPixelLen(Str)) / 2)
+#define RIGHT_ALIGN(Str)     	(DISPLAY_WIDTH - Display.strPixelLen(Str))
+
+#define TOP_POS					0
+#define CENTER_POS				(DISPLAY_HIGH / 2)
+#define BOTTOM_POS				(DISPLAY_HIGH - Display.fontCapHeight())
+
+#define NAV_BUTT_X_START		270
+#define NAV_BUTT_Y_START		 60
+#define NAV_BUTT_WIDTH		     40
+#define NAV_BUTT_HIGH		     40
+#define NAV_BUTT_INTERLINE		 20
+
+#define MENU_TITLE_POS			(TOP_POS + 30)
+
+#define MAX_MENU_VIEW_ITEMS		5
+
+#define MENU_ITEMS_POS			(TOP_POS + 70)
 
 
 // // Color definitions
@@ -34,24 +61,25 @@
 // #define CL(_r,_g,_b) ((((_r)&0xF8)<<8)|(((_g)&0xFC)<<3)|((_b)>>3))
 
 // Font arial 
-// extern const ILI9341_t3_font_t Arial_8;
-// extern const ILI9341_t3_font_t Arial_9;
-// extern const ILI9341_t3_font_t Arial_10;
-// extern const ILI9341_t3_font_t Arial_11;
-// extern const ILI9341_t3_font_t Arial_12;
-// extern const ILI9341_t3_font_t Arial_13;
-// extern const ILI9341_t3_font_t Arial_14;
-// extern const ILI9341_t3_font_t Arial_16;
-// extern const ILI9341_t3_font_t Arial_18;
-// extern const ILI9341_t3_font_t Arial_20;
-// extern const ILI9341_t3_font_t Arial_24;
-// extern const ILI9341_t3_font_t Arial_28;
-// extern const ILI9341_t3_font_t Arial_32;
-// extern const ILI9341_t3_font_t Arial_40;
-// extern const ILI9341_t3_font_t Arial_48;
-// extern const ILI9341_t3_font_t Arial_60;
-// extern const ILI9341_t3_font_t Arial_72;
-// extern const ILI9341_t3_font_t Arial_96;
+// extern const ILI9341_t3_font_t Arial_8;  char lenght = 4px            extern const ILI9341_t3_font_t Arial_8_Bold;
+// extern const ILI9341_t3_font_t Arial_9;                               extern const ILI9341_t3_font_t Arial_9_Bold;
+// extern const ILI9341_t3_font_t Arial_10; char lenght = 5px            extern const ILI9341_t3_font_t Arial_10_Bold;
+// extern const ILI9341_t3_font_t Arial_11;                              extern const ILI9341_t3_font_t Arial_11_Bold;
+// extern const ILI9341_t3_font_t Arial_12;                              extern const ILI9341_t3_font_t Arial_12_Bold;
+// extern const ILI9341_t3_font_t Arial_13;                              extern const ILI9341_t3_font_t Arial_13_Bold;
+// extern const ILI9341_t3_font_t Arial_14;                              extern const ILI9341_t3_font_t Arial_14_Bold;
+// extern const ILI9341_t3_font_t Arial_16;                              extern const ILI9341_t3_font_t Arial_16_Bold;
+// extern const ILI9341_t3_font_t Arial_18;                              extern const ILI9341_t3_font_t Arial_18_Bold;
+// extern const ILI9341_t3_font_t Arial_20; char lenght = 9px            extern const ILI9341_t3_font_t Arial_20_Bold;
+// extern const ILI9341_t3_font_t Arial_24;                              extern const ILI9341_t3_font_t Arial_24_Bold;
+// extern const ILI9341_t3_font_t Arial_28;                              extern const ILI9341_t3_font_t Arial_28_Bold;
+// extern const ILI9341_t3_font_t Arial_32;                              extern const ILI9341_t3_font_t Arial_32_Bold;
+// extern const ILI9341_t3_font_t Arial_40;                              extern const ILI9341_t3_font_t Arial_40_Bold;
+// extern const ILI9341_t3_font_t Arial_48;                              extern const ILI9341_t3_font_t Arial_48_Bold;
+// extern const ILI9341_t3_font_t Arial_60;                              extern const ILI9341_t3_font_t Arial_60_Bold;
+// extern const ILI9341_t3_font_t Arial_72;                              extern const ILI9341_t3_font_t Arial_72_Bold;
+// extern const ILI9341_t3_font_t Arial_96;                              extern const ILI9341_t3_font_t Arial_96_Bold;
+
 
 typedef enum
 {
@@ -93,6 +121,6 @@ void ClearDisplay(bool Inverse);
 void DisplaySetRotation(uint8_t Rotation);
 void CheckTouch(void);
 
-void TestDisplayTouch();
+void DrawMainMenu();
 
 #endif

@@ -1,5 +1,7 @@
+#include "PhaseAnalyzer.h"
 #include "Display.h"
 
+uint8_t AnalyzerPage = MAIN_MENU;
 
 void setup()
 {
@@ -9,6 +11,20 @@ void setup()
 
 void loop()
 {
-	TestDisplayTouch();
-	delay(50);
+	switch(AnalyzerPage)
+	{
+		case MAIN_MENU:
+			DrawMainMenu();
+			break;
+		case MEASURE:
+			break;
+		case GRAPHICS:
+			break;
+		case LOGS:
+			break;
+		case SETTINGS:
+			break;
+		default:
+			break;
+	}
 }

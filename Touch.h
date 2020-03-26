@@ -3,6 +3,17 @@
 
 #include "Display.h"
 
+typedef enum
+{
+	UP = 0,
+	DOWN,
+	OK,
+	BACK,
+	MAX_KEY
+}KEYS;
+
+
+
 void CheckTouch(void);
 
 
