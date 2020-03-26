@@ -31,7 +31,7 @@
 #define NAV_BUTT_HIGH		     40
 #define NAV_BUTT_INTERLINE		 20
 
-#define MENU_TITLE_POS			(TOP_POS + 30)
+#define MENU_TITLE_POS			(TOP_POS + 20)
 
 #define MAX_MENU_VIEW_ITEMS		5
 
@@ -117,10 +117,12 @@ extern XPT2046_Touchscreen Touch;
 extern DISPLAY_VAR DisplayParam;
 
 void DisplaySetup(uint8_t Rotation);
-void ClearDisplay(bool Inverse);
 void DisplaySetRotation(uint8_t Rotation);
-void CheckTouch(void);
 
 void DrawMainMenu();
+void DrawMeasurePage();
+void DrawGraphicsPage();
+void DrawLogsPage();
+void DrawSettingPage();
 
 #endif

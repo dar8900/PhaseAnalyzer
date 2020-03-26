@@ -40,7 +40,7 @@ void CheckTouch()
 		while(Touch.touched() == true)
 		{
 			ReScaleDisplayCoord(Touch.getPoint());
-			if(millis() - TouchTime >= 1000)
+			if(millis() - TouchTime >= 500)
 			{
 				LongTouch = true;
 				break;
@@ -58,6 +58,7 @@ void CheckTouch()
 			else
 				WasLongTouched = false;
 		}
+		delay(25);
 	}
 }
 
