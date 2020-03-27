@@ -1,14 +1,16 @@
 #include "PhaseAnalyzer.h"
 #include "Display.h"
 #include "Measures.h"
+#include "Time.h"
 
-uint8_t AnalyzerPage = MEASURE;
+uint8_t AnalyzerPage = MAIN_MENU;
 
 void setup()
 {
 	Serial.begin(9600);
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
+	RtcInit();
 }
 
 void loop()

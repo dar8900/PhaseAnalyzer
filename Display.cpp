@@ -2,6 +2,7 @@
 #include "Display.h"
 #include "Touch.h"
 #include "Measures.h"
+#include "Time.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -18,20 +19,31 @@ typedef struct
 	
 }NAV_BUTTON_COORD;
 
-enum
+typedef enum
 {
 	LINE_1 = 0,
 	LINE_2,
 	LINE_3,
 	MAX_LINES
-};
+}LINES;
+
+typedef enum
+{
+	NO_TYPE = 0,
+	INT,
+	UINT,
+	DOUBLE,
+	DOUBLE_NO_FORMAT,
+	MAX_TYPES
+}TYPES;
 
 typedef struct
 {
-	double *actualMeasure;
-	double *max;
-	double *min;
+	void *actualMeasure;
+	void *max;
+	void *min;
 	String measureUnit;
+	uint8_t type;
 }MEASURE_LINE;
 
 typedef struct
@@ -51,11 +63,29 @@ typedef struct
 
 const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] = 
 {
-	{{&Current.actual, &Current.max	    , &Current.min, "A" }, {&Voltage.actual, &Voltage.max    , &Voltage.min,   "V" } , {&Pf.actual    , &Pf.max     , &Pf.min  , ""   }},
-	{{&PAtt.actual   , &PAtt.max   	    , &PAtt.min   , "W" }, {&PRea.actual   , &PRea.max       , &PRea.min   , "VAr" } , {&PApp.actual  , &PApp.max   , &PApp.min, "VA" }},
-	{{&Current.avg   , &Current.maxAvg  , NULL        , "A" }, {&Voltage.avg   , &Voltage.maxAvg , NULL        ,   "V" } , {&Pf.avg       , &Pf.maxAvg  , NULL  , ""      }},
-	{{&PAtt.avg      , &PAtt.maxAvg     , NULL        , "W" }, {&PRea.avg      , &PRea.maxAvg    , NULL        , "VAr" } , {&PApp.avg     , &PApp.maxAvg, NULL  , "VA"    }},
-	{{&EnAtt.actual  , NULL        		, NULL        , "Wh"}, {&EnRea.actual  , NULL            , NULL        , "VArh"} , {&EnApp.actual , NULL        , NULL  , "VAh"   }},
+	{{&Current.actual, &Current.max	    , &Current.min, "A"   , DOUBLE 			 }, 
+	{&Voltage.actual , &Voltage.max     , &Voltage.min, "V"   , DOUBLE 			 } , 
+	{&Pf.actual      , &Pf.max          , &Pf.min     , ""    , DOUBLE_NO_FORMAT }},
+	
+	{{&PAtt.actual   , &PAtt.max   	    , &PAtt.min   , "W"   , DOUBLE           }, 
+	{&PRea.actual    , &PRea.max        , &PRea.min   , "VAr" , DOUBLE           } , 
+	{&PApp.actual    , &PApp.max        , &PApp.min   , "VA"  , DOUBLE           }},
+	
+	{{&Current.avg   , &Current.maxAvg  , NULL        , "A"   , DOUBLE           }, 
+	{&Voltage.avg    , &Voltage.maxAvg  , NULL        , "V"   , DOUBLE           } , 
+	{&Pf.avg         , &Pf.maxAvg       , NULL        , ""    , DOUBLE_NO_FORMAT }},
+	
+	{{&PAtt.avg      , &PAtt.maxAvg     , NULL        , "W"   , DOUBLE           }, 
+	{&PRea.avg       , &PRea.maxAvg     , NULL        , "VAr" , DOUBLE           } ,
+	{&PApp.avg       , &PApp.maxAvg     , NULL        , "VA"  , DOUBLE           }},
+	
+	{{&EnAtt.actual  , NULL        		, NULL        , "Wh"  , DOUBLE 		     }, 
+	{&EnRea.actual   , NULL             , NULL        , "VArh", DOUBLE 		     } , 
+	{&EnApp.actual   , NULL             , NULL  	  , "VAh" , DOUBLE 		     }},
+	
+	{{&Time.liveCnt  , NULL        		, NULL        , "s"   , UINT   		     }, 
+	{		   NULL  , NULL             , NULL        , ""    , NO_TYPE		     } , 
+	{	       NULL  , NULL             , NULL  	  , ""    , NO_TYPE		     }},
 };
 
 const RANGES RangeTab[RANGE_TAB_LENGHT] = 
@@ -88,7 +118,7 @@ XPT2046_Touchscreen Touch(CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
-Chrono DisplayRefresh, MeasureRefresh;
+Chrono TimeRefresh, DisplayRefresh, MeasureRefresh;
 
 NAV_BUTTON_COORD Up = {NAV_BUTT_X_START, NAV_BUTT_Y_START, NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
 NAV_BUTTON_COORD Down = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (2 * (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE)), NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
@@ -102,6 +132,16 @@ const char *MenuVoices[MAX_MENU_ITEMS] =
 	"Grafici",
 	"Log",
 	"Impostazioni",
+};
+
+const char *MeasureTitle[MAX_MEASURE_PAGES] = 
+{
+	"I V PF",
+	"Potenze",
+	"Medie 1",
+	"Medie 2",
+	"Energie",
+	"Wake time",
 };
 
 static uint8_t SearchRange(double Value2Search)
@@ -128,7 +168,9 @@ static uint8_t SearchRange(double Value2Search)
 
 void DoTasks()
 {
-	GetMeasure();
+	GetMeasure();	
+	if(TimeRefresh.hasPassed(1000, true))
+		Time.liveCnt++;
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -194,7 +236,7 @@ void DisplaySetup(uint8_t Rotation)
 
 static void ClearMenu()
 {
-	Display.fillRect(0, MENU_TITLE_POS + 25, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 30), ILI9341_BLACK);
+	Display.fillRect(0, MENU_TITLE_POS + 32, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 30), ILI9341_BLACK);
 }
 
 static void DrawNavButtons(bool DrawBackButt)
@@ -234,12 +276,14 @@ static void DrawNavButtons(bool DrawBackButt)
 
 static void DrawTopInfo()
 {
+	GetTime();
+	Display.fillRect(0, 0, DISPLAY_WIDTH, 20, ILI9341_BLACK);
 	Display.setTextColor(ILI9341_WHITE);
 	Display.setFont(Arial_12);
 	Display.setCursor(LEFT_ALIGN, TOP_POS);
-	Display.print("--:--");
-	Display.setCursor(RIGHT_ALIGN("--/--/--"), TOP_POS);
-	Display.print("--/--/--");
+	Display.print(TimeStr.c_str());
+	Display.setCursor(RIGHT_ALIGN(DateStr.c_str()), TOP_POS);
+	Display.print(DateStr.c_str());
 }
 
 static uint8_t ButtonPressed()
@@ -366,11 +410,28 @@ void DrawMainMenu()
 }
 
 
-static void FormatMeasure(double *Measure2Format, String *Measure, String *Udm, bool isPF)
+static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, uint8_t Type)
 {
-	double MeasureCpy = *Measure2Format;
+	double MeasureCpy = 0.0;
+	switch(Type)
+	{
+		case INT:
+			MeasureCpy = (double)*(int32_t*)Measure2Format;
+			break;
+		case UINT:
+			MeasureCpy = (double)*(uint32_t*)Measure2Format;
+			break;
+		case DOUBLE:
+		case DOUBLE_NO_FORMAT:
+			MeasureCpy = *(double*)Measure2Format;
+			break;
+		default:
+			break;
+			
+	}
+	
 	uint8_t Range = 0;
-	if(!isPF)
+	if(Type != DOUBLE_NO_FORMAT && Type > UINT)
 	{
 		Range = SearchRange(MeasureCpy);
 		MeasureCpy *= RangeTab[Range].rescale;
@@ -378,17 +439,26 @@ static void FormatMeasure(double *Measure2Format, String *Measure, String *Udm, 
 		{
 			*Udm = String(RangeTab[Range].odg);
 		}
+		*Measure = String(MeasureCpy, 3);
 	}
-	*Measure = String(MeasureCpy, 3);
+	else if(Type == UINT)
+	{
+		*Measure = String((uint32_t)MeasureCpy);
+	}
+	else
+	{
+		*Measure = String(MeasureCpy, 3);
+	}
+	
 }
 
-static void FormatMaxMin(double *Measure2Format, String *Measure, String *Udm, bool isPF)
+static void FormatMaxMin(void *Measure2Format, String *Measure, String *Udm, uint8_t Type)
 {
-	double MeasureCpy = *Measure2Format;
+	double MeasureCpy = *(double*)Measure2Format;
 	uint8_t Range = 0;
 	char MaxMinStr[6];
 	String MeasureString = "";
-	if(!isPF)
+	if(Type != DOUBLE_NO_FORMAT)
 	{
 		Range = SearchRange(MeasureCpy);
 		MeasureCpy *= RangeTab[Range].rescale;
@@ -408,7 +478,7 @@ static void DrawMeasureLine(uint8_t MeasurePage, uint8_t Line)
 	uint16_t MeasureLenght = 0;
 	String MainMeasure = "", Max = "", Min = "", Udm = "";
 	const MEASURE_LINE *MeasureTabLine;
-	bool isPF = false;
+
 	switch(Line)
 	{
 		case LINE_1:
@@ -418,54 +488,60 @@ static void DrawMeasureLine(uint8_t MeasurePage, uint8_t Line)
 			MeasureTabLine = &MeasureTab[MeasurePage].measureL2;
 			break;
 		case LINE_3:
-			if(MeasurePage == V_I_PF || MeasurePage == V_I_PF_AVG)
-				isPF = true;
 			MeasureTabLine = &MeasureTab[MeasurePage].measureL3;
 			break;
 		default:
 			break;
 	}
 	
-	FormatMeasure(MeasureTabLine->actualMeasure, &MainMeasure, &Udm, isPF);
-	Udm += MeasureTabLine->measureUnit;
-	
-	Display.setTextColor(ILI9341_WHITE);
-	Display.setFont(Arial_28_Bold);	
-	Display.setCursor(55, MEASURE_POS + 40 + (Line * 65));
-	Display.print(MainMeasure.c_str());
-	
-	MeasureLenght = TEXT_LENGHT(MainMeasure.c_str());
-	Display.setFont(Arial_14_Bold);	
-	Display.setCursor(55 + MeasureLenght + 2, MEASURE_POS + 55 + (Line * 65));
-	Display.print(Udm.c_str());
-	
-	Display.setFont(Arial_9_Bold);	
-	Display.setCursor(0, MEASURE_POS + 30 + (Line * 65));
-	Display.print("Max");
-	
-	Udm = "";
-	if(MeasureTabLine->max != NULL)
-		FormatMaxMin(MeasureTabLine->max, &Max, &Udm, isPF);
-	else
-		Max = "----";
-	Max += Udm;
-	Display.setFont(Arial_10_Bold);
-	Display.setCursor(0, MEASURE_POS + 42 + (Line * 65));
-	Display.print(Max.c_str());	
+	if(MeasureTabLine->actualMeasure != NULL)
+	{
+		// MISURA PRINCIPALE
+		FormatMeasure(MeasureTabLine->actualMeasure, &MainMeasure, &Udm, MeasureTabLine->type);
+		Udm += MeasureTabLine->measureUnit;
+		
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_28_Bold);	
+		Display.setCursor(55, MEASURE_POS + 40 + (Line * 65));
+		Display.print(MainMeasure.c_str());
+		
+		MeasureLenght = TEXT_LENGHT(MainMeasure.c_str());
+		Display.setFont(Arial_14_Bold);	
+		Display.setCursor(55 + MeasureLenght + 2, MEASURE_POS + 55 + (Line * 65));
+		Display.print(Udm.c_str());
+	}
+		
+	if(MeasureTabLine->max != NULL || MeasureTabLine->min != NULL)
+	{
+		// MISURA MAX
+		Display.setFont(Arial_9_Bold);	
+		Display.setCursor(0, MEASURE_POS + 30 + (Line * 65));
+		Display.print("Max");
+		Udm = "";
+		if(MeasureTabLine->max != NULL)
+			FormatMaxMin(MeasureTabLine->max, &Max, &Udm, MeasureTabLine->type);
+		else
+			Max = "----";
+		Max += Udm;
+		Display.setFont(Arial_10_Bold);
+		Display.setCursor(0, MEASURE_POS + 42 + (Line * 65));
+		Display.print(Max.c_str());	
 
-	Udm = "";	
-	Display.setFont(Arial_9_Bold);
-	Display.setCursor(0, MEASURE_POS + 54 + (Line * 65));
-	Display.print("Min");
+		// MISURA MIN
+		Udm = "";	
+		Display.setFont(Arial_9_Bold);
+		Display.setCursor(0, MEASURE_POS + 54 + (Line * 65));
+		Display.print("Min");
 
-	if(MeasureTabLine->min != NULL)
-		FormatMaxMin(MeasureTabLine->min, &Min, &Udm, isPF);
-	else
-		Min = "----";
-	Min += Udm;
-	Display.setFont(Arial_10_Bold);
-	Display.setCursor(0, MEASURE_POS + 66 + (Line * 65));
-	Display.print(Min.c_str());	
+		if(MeasureTabLine->min != NULL)
+			FormatMaxMin(MeasureTabLine->min, &Min, &Udm, MeasureTabLine->type);
+		else
+			Min = "----";
+		Min += Udm;
+		Display.setFont(Arial_10_Bold);
+		Display.setCursor(0, MEASURE_POS + 66 + (Line * 65));
+		Display.print(Min.c_str());	
+	}
 	
 }
 
@@ -488,8 +564,8 @@ void DrawMeasurePage()
 		}
 		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
-		Display.setCursor(CENTER_ALIGN("Misure"), MENU_TITLE_POS);
-		Display.print("Misure");
+		Display.setCursor(CENTER_ALIGN(MeasureTitle[Item]), MENU_TITLE_POS);
+		Display.print(MeasureTitle[Item]);
 		Display.setFont(Arial_12);
 		Display.setTextColor(ILI9341_WHITE);
 		NumPage = String(Item + 1) + "/" + String(MAX_MEASURE_PAGES);
@@ -532,6 +608,8 @@ void DrawMeasurePage()
 		if(OldItem != Item)
 		{
 			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 24, MENU_TITLE_POS + 8, 40, 16, ILI9341_BLACK);
+			Display.setFont(Arial_24_Bold);
+			Display.fillRect(CENTER_ALIGN(MeasureTitle[OldItem]) - 2, MENU_TITLE_POS - 2, TEXT_LENGHT(MeasureTitle[OldItem]) + 4, 33, ILI9341_BLACK);
 			OldItem = Item;
 		}
 	}		

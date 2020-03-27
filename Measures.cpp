@@ -117,9 +117,9 @@ static void CalcEnergy()
 	EnAppCnt++;
 	if(EnergyTimer.hasPassed(1000, true))
 	{
-		EnAtt.actual = (EnAttAcc / EnAttCnt) / 3600;
-		EnRea.actual = (EnReaAcc / EnReaCnt) / 3600;
-		EnApp.actual = (EnAppAcc / EnAppCnt) / 3600;
+		EnAtt.actual += (EnAttAcc / EnAttCnt) / 3600;
+		EnRea.actual += (EnReaAcc / EnReaCnt) / 3600;
+		EnApp.actual += (EnAppAcc / EnAppCnt) / 3600;
 		EnAttAcc  = 0.0;
 		EnReaAcc  = 0.0;
 		EnAppAcc  = 0.0;
@@ -136,7 +136,7 @@ void GetMeasure()
 	adc1Val = adc->adc1->analogRead(VOLTAGE_PIN);
 	
 	Current.actual = (double)(adc0Val*3.3/adc->adc0->getMaxValue()); 
-	Voltage.actual = (double)(adc1Val*3.3/adc->adc0->getMaxValue()); 
+	Voltage.actual = 220;//(double)(adc1Val*3.3/adc->adc0->getMaxValue()); 
 	
 	PAtt.actual = Current.actual * Voltage.actual;
 	Pf.actual = (double)(rand()%1000) / 1000.0;
