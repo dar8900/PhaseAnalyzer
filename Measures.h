@@ -7,6 +7,7 @@ typedef struct
 	double max;
 	double min;
 	double avg;
+	double maxAvg;
 }MEASURES_VAR;
 
 extern MEASURES_VAR Current;
@@ -20,5 +21,6 @@ extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
 void AnalogInit();
+void GetMeasure();
 
 #endif

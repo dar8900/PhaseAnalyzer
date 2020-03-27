@@ -6,6 +6,7 @@
 #define DRAW_OK		false
 #define DRAW_BACK	true
 
+#define RANGE_TAB_LENGHT 21
 
 typedef struct
 {
@@ -17,12 +18,20 @@ typedef struct
 	
 }NAV_BUTTON_COORD;
 
+enum
+{
+	LINE_1 = 0,
+	LINE_2,
+	LINE_3,
+	MAX_LINES
+};
+
 typedef struct
 {
 	double *actualMeasure;
 	double *max;
 	double *min;
-	char  *measureUnit;
+	String measureUnit;
 }MEASURE_LINE;
 
 typedef struct
@@ -33,20 +42,53 @@ typedef struct
 }MEASURE_PAGE;
 
 
+typedef struct 
+{
+	double value;
+	char   odg;
+	double rescale;
+}RANGES;
+
 const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] = 
 {
-	{{&Current.actual, &Current.max, &Current.min, "A"}, {&Voltage.actual, &Voltage.max, &Voltage.min,   "V"} , {&Pf.actual  , &Pf.max  , &Pf.min  , ""}},
-	{{&PAtt.actual   , &PAtt.max   , &PAtt.min   , "W"}, {&PRea.actual   , &PRea.max   , &PRea.min   , "VAr"} , {&PApp.actual, &PApp.max, &PApp.min, "VA"}},
-	{{&Current.avg   , NULL        , NULL        , "A"}, {&Voltage.avg   , NULL        , NULL        ,   "V"} , {&Pf.actual  , &Pf.max  , &Pf.min  , ""}},
-	{{&PAtt.avg      , NULL        , NULL        , "W"}, {&PRea.avg      , NULL        , NULL        , "VAr"} , {&PApp.avg   , NULL        , NULL  , "VAr"}},
-	{{&Current.actual, &Current.max, &Current.min, "A"}, {&Current.actual, &Current.max, &Current.min, "A"}, {&Current.actual, &Current.max, &Current.min, "A"}},
+	{{&Current.actual, &Current.max	    , &Current.min, "A" }, {&Voltage.actual, &Voltage.max    , &Voltage.min,   "V" } , {&Pf.actual    , &Pf.max     , &Pf.min  , ""   }},
+	{{&PAtt.actual   , &PAtt.max   	    , &PAtt.min   , "W" }, {&PRea.actual   , &PRea.max       , &PRea.min   , "VAr" } , {&PApp.actual  , &PApp.max   , &PApp.min, "VA" }},
+	{{&Current.avg   , &Current.maxAvg  , NULL        , "A" }, {&Voltage.avg   , &Voltage.maxAvg , NULL        ,   "V" } , {&Pf.avg       , &Pf.maxAvg  , NULL  , ""      }},
+	{{&PAtt.avg      , &PAtt.maxAvg     , NULL        , "W" }, {&PRea.avg      , &PRea.maxAvg    , NULL        , "VAr" } , {&PApp.avg     , &PApp.maxAvg, NULL  , "VA"    }},
+	{{&EnAtt.actual  , NULL        		, NULL        , "Wh"}, {&EnRea.actual  , NULL            , NULL        , "VArh"} , {&EnApp.actual , NULL        , NULL  , "VAh"   }},
+};
+
+const RANGES RangeTab[RANGE_TAB_LENGHT] = 
+{
+	{0.000000001	, 'n',  1000000000.0},
+	{0.00000001		, 'n',  1000000000.0},
+	{0.0000001		, 'n',  1000000000.0},
+	{0.000001		, 'u',     1000000.0},
+	{0.00001		, 'u',     1000000.0},
+	{0.0001			, 'u',     1000000.0},
+	{0.001			, 'm',  	  1000.0},
+	{0.01			, 'm',  	  1000.0},
+	{0.1			, 'm',  	  1000.0},
+	{1.0			, ' ',           1.0},
+	{10.0			, ' ',           1.0},
+	{100.0			, ' ',           1.0},
+	{1000.0			, 'k',         0.001},
+	{10000.0		, 'k',         0.001},
+	{100000.0		, 'k',         0.001},
+	{1000000.0		, 'M',      0.000001},
+	{10000000.0		, 'M',      0.000001},
+	{100000000.0	, 'M',      0.000001},
+	{1000000000.0	, 'G',   0.000000001},
+	{10000000000.0	, 'G',   0.000000001},
+	{100000000000.0	, 'G',   0.000000001},
+	
 };
 
 XPT2046_Touchscreen Touch(CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
-Chrono DisplayRefresh;
+Chrono DisplayRefresh, MeasureRefresh;
 
 NAV_BUTTON_COORD Up = {NAV_BUTT_X_START, NAV_BUTT_Y_START, NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
 NAV_BUTTON_COORD Down = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (2 * (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE)), NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
@@ -62,6 +104,32 @@ const char *MenuVoices[MAX_MENU_ITEMS] =
 	"Impostazioni",
 };
 
+static uint8_t SearchRange(double Value2Search)
+{
+	uint8_t Range = 0;
+	for(Range = 0; Range < RANGE_TAB_LENGHT; Range++)
+	{
+		if(Value2Search > RangeTab[Range].value)
+			continue;
+		else
+		{
+			if(Range - 1 >= 0)
+			{
+				Range -= 1;
+			}
+			else
+				Range = 0;
+			break;
+		}
+	}
+
+	return Range;
+}
+
+void DoTasks()
+{
+	GetMeasure();
+}
 
 void DisplaySetRotation(uint8_t Rotation)
 {
@@ -126,7 +194,7 @@ void DisplaySetup(uint8_t Rotation)
 
 static void ClearMenu()
 {
-	Display.fillRect(0, MENU_TITLE_POS + 25, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 40), ILI9341_BLACK);
+	Display.fillRect(0, MENU_TITLE_POS + 25, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 30), ILI9341_BLACK);
 }
 
 static void DrawNavButtons(bool DrawBackButt)
@@ -150,7 +218,7 @@ static void DrawNavButtons(bool DrawBackButt)
 	
 	if(!DrawBackButt)
 	{
-		Display.setTextColor(ILI9341_WHITE);
+		Display.setTextColor(ILI9341_BLACK);
 		Display.setFont(Arial_10_Bold);
 		Display.setCursor(NAV_BUTT_X_START + 10, NAV_BUTT_Y_START + 16 + (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE));	
 		Display.print("OK");
@@ -221,6 +289,7 @@ void DrawMainMenu()
 	DrawNavButtons(DRAW_OK);
 	while(!ExitMainMenu)
 	{
+		DoTasks();
 		if(DisplayRefresh.hasPassed(500, true))
 		{
 			DrawTopInfo();
@@ -297,27 +366,141 @@ void DrawMainMenu()
 }
 
 
+static void FormatMeasure(double *Measure2Format, String *Measure, String *Udm, bool isPF)
+{
+	double MeasureCpy = *Measure2Format;
+	uint8_t Range = 0;
+	if(!isPF)
+	{
+		Range = SearchRange(MeasureCpy);
+		MeasureCpy *= RangeTab[Range].rescale;
+		if(RangeTab[Range].odg != ' ')
+		{
+			*Udm = String(RangeTab[Range].odg);
+		}
+	}
+	*Measure = String(MeasureCpy, 3);
+}
+
+static void FormatMaxMin(double *Measure2Format, String *Measure, String *Udm, bool isPF)
+{
+	double MeasureCpy = *Measure2Format;
+	uint8_t Range = 0;
+	char MaxMinStr[6];
+	String MeasureString = "";
+	if(!isPF)
+	{
+		Range = SearchRange(MeasureCpy);
+		MeasureCpy *= RangeTab[Range].rescale;
+		if(RangeTab[Range].odg != ' ')
+		{
+			*Udm = String(RangeTab[Range].odg);
+		}		
+	}
+	MeasureString = String(MeasureCpy, 3);
+	MeasureString.toCharArray(MaxMinStr, 6);
+	*Measure = String(MaxMinStr);
+}
+
+
+static void DrawMeasureLine(uint8_t MeasurePage, uint8_t Line)
+{
+	uint16_t MeasureLenght = 0;
+	String MainMeasure = "", Max = "", Min = "", Udm = "";
+	const MEASURE_LINE *MeasureTabLine;
+	bool isPF = false;
+	switch(Line)
+	{
+		case LINE_1:
+			MeasureTabLine = &MeasureTab[MeasurePage].measureL1;
+			break;
+		case LINE_2:
+			MeasureTabLine = &MeasureTab[MeasurePage].measureL2;
+			break;
+		case LINE_3:
+			if(MeasurePage == V_I_PF || MeasurePage == V_I_PF_AVG)
+				isPF = true;
+			MeasureTabLine = &MeasureTab[MeasurePage].measureL3;
+			break;
+		default:
+			break;
+	}
+	
+	FormatMeasure(MeasureTabLine->actualMeasure, &MainMeasure, &Udm, isPF);
+	Udm += MeasureTabLine->measureUnit;
+	
+	Display.setTextColor(ILI9341_WHITE);
+	Display.setFont(Arial_28_Bold);	
+	Display.setCursor(55, MEASURE_POS + 40 + (Line * 65));
+	Display.print(MainMeasure.c_str());
+	
+	MeasureLenght = TEXT_LENGHT(MainMeasure.c_str());
+	Display.setFont(Arial_14_Bold);	
+	Display.setCursor(55 + MeasureLenght + 2, MEASURE_POS + 55 + (Line * 65));
+	Display.print(Udm.c_str());
+	
+	Display.setFont(Arial_9_Bold);	
+	Display.setCursor(0, MEASURE_POS + 30 + (Line * 65));
+	Display.print("Max");
+	
+	Udm = "";
+	if(MeasureTabLine->max != NULL)
+		FormatMaxMin(MeasureTabLine->max, &Max, &Udm, isPF);
+	else
+		Max = "----";
+	Max += Udm;
+	Display.setFont(Arial_10_Bold);
+	Display.setCursor(0, MEASURE_POS + 42 + (Line * 65));
+	Display.print(Max.c_str());	
+
+	Udm = "";	
+	Display.setFont(Arial_9_Bold);
+	Display.setCursor(0, MEASURE_POS + 54 + (Line * 65));
+	Display.print("Min");
+
+	if(MeasureTabLine->min != NULL)
+		FormatMaxMin(MeasureTabLine->min, &Min, &Udm, isPF);
+	else
+		Min = "----";
+	Min += Udm;
+	Display.setFont(Arial_10_Bold);
+	Display.setCursor(0, MEASURE_POS + 66 + (Line * 65));
+	Display.print(Min.c_str());	
+	
+}
+
 void DrawMeasurePage()
 {
 	bool ExitMeasures = false;
 	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_BACK);
 	while(!ExitMeasures)
 	{
+		DoTasks();
 		if(DisplayRefresh.hasPassed(500, true))
 		{
 			DrawTopInfo();
-			DrawNavButtons(DRAW_BACK);
+			DrawNavButtons(DRAW_BACK);		
 		}
 		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
 		Display.setCursor(CENTER_ALIGN("Misure"), MENU_TITLE_POS);
 		Display.print("Misure");
-		
-		
+		Display.setFont(Arial_12);
+		Display.setTextColor(ILI9341_WHITE);
+		NumPage = String(Item + 1) + "/" + String(MAX_MEASURE_PAGES);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 20, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		if(MeasureRefresh.hasPassed(1000, true))
+		{
+			ClearMenu();
+			for(int Line = 0; Line < MAX_LINES; Line++)
+				DrawMeasureLine(Item, Line);				
+		}
 		
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
@@ -326,10 +509,10 @@ void DrawMeasurePage()
 				if(Item > 0)
 					Item--;
 				else
-					Item = MAX_MENU_ITEMS - 1;
+					Item = MAX_MEASURE_PAGES - 1;
 				break;
 			case DOWN:
-				if(Item < MAX_MENU_ITEMS - 1)
+				if(Item < MAX_MEASURE_PAGES - 1)
 					Item++;
 				else
 					Item = 0;			
@@ -348,8 +531,7 @@ void DrawMeasurePage()
 	
 		if(OldItem != Item)
 		{
-			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 24, MENU_TITLE_POS + 8, 40, 16, ILI9341_BLACK);
 			OldItem = Item;
 		}
 	}		

@@ -16,6 +16,7 @@
 
 #endif
 
+#define MIN_TO_SEC(min)			(min * 60)
 
 typedef enum
 {

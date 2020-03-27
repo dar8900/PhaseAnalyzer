@@ -2,7 +2,7 @@
 #include "Display.h"
 #include "Measures.h"
 
-uint8_t AnalyzerPage = MAIN_MENU;
+uint8_t AnalyzerPage = MEASURE;
 
 void setup()
 {

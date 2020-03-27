@@ -32,6 +32,7 @@
 #define NAV_BUTT_INTERLINE		 20
 
 #define MENU_TITLE_POS			(TOP_POS + 20)
+#define MEASURE_POS				(TOP_POS + 25)
 
 #define MAX_MENU_VIEW_ITEMS		5
 
