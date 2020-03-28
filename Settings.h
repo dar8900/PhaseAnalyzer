@@ -1,0 +1,59 @@
+#ifndef SETTINGS_H
+#define SETTINGS_H
+
+typedef enum
+{
+	VALUE_TYPE = 0,
+	ENUM_TYPE,
+	DATE_TYPE,
+	MAX_TYPE
+}SETTING_TYPE;
+
+typedef struct
+{
+	int32_t *settingVal;
+	int32_t settingMax;
+	int32_t settingMin;
+	uint8_t type;
+	char *udm;
+	char *settingName;
+}SETTING_DEF;
+
+typedef struct
+{
+	void *enumValuePtr;
+	char *enumName;
+}ENUM_VAL;
+
+typedef enum
+{
+	CURRENT_LOG = 0,
+	VOLTAGE_LOG,
+	P_ATT_LOG,
+	PREA_LOG,
+	P_APP_LOG,
+	PF_LOG,
+	MAX_MEASURE_LOG
+}LOGS_MEASURES;
+
+typedef enum
+{
+	CHANGE_TIME = 0,
+	CHANGE_DATE,
+	SET_LOG_TIME,
+	SET_LOG_MEASURE,
+	ENABLE_LOG_MEASURE,
+	OVER_CURRENT_VALUE,
+	ENABLE_OVER_CURRENT,
+	UNDER_CURRENT_VALUE,
+	ENABLE_UNDER_CURRENT,
+	OVER_ATT_POWER_VALUE,
+	ENABLE_OVER_PATT_POWER,
+	UNDER_ATT_POWER_VALUE,
+	ENABLE_UNDER_PATT_POWER,
+	AVG_TIME,
+	MAX_SETTINGS
+}SETTINGS_LIST;
+
+
+#endif
