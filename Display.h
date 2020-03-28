@@ -25,7 +25,7 @@
 #define CENTER_POS				(DISPLAY_HIGH / 2)
 #define BOTTOM_POS				(DISPLAY_HIGH - Display.fontCapHeight())
 
-#define NAV_BUTT_X_START		270
+#define NAV_BUTT_X_START		280
 #define NAV_BUTT_Y_START		 60
 #define NAV_BUTT_WIDTH		     40
 #define NAV_BUTT_HIGH		     40
@@ -34,10 +34,15 @@
 #define MENU_TITLE_POS			(TOP_POS + 20)
 #define MEASURE_POS				(TOP_POS + 25)
 
-#define MAX_MENU_VIEW_ITEMS		5
+#define MAX_MENU_VIEW_ITEMS		4
 
 #define MENU_ITEMS_POS			(TOP_POS + 70)
 
+#define GRAPHIC_X				0
+#define GRAPHIC_Y				(MENU_TITLE_POS + 28)
+#define GRAPHIC_W				200 //(DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2)
+#define GRAPHIC_H				190
+#define GRAPHIC_HALF			(GRAPHIC_Y + (GRAPHIC_H / 2))
 
 // // Color definitions
 // #define ILI9341_BLACK       0x0000      /*   0,   0,   0 */
@@ -124,6 +129,7 @@ void DrawMainMenu();
 void DrawMeasurePage();
 void DrawGraphicsPage();
 void DrawLogsPage();
+void DrawAlarmPage();
 void DrawSettingPage();
 
 #endif

@@ -26,7 +26,7 @@ void RtcInit()
 			rtc.adjust(DateTime(2020, 3, 27, 16, 10, 0)); 
 		}
 	}
-
+	rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // DA ELIMINARE
 }
 
 void GetTime()

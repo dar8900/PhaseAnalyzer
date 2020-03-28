@@ -131,6 +131,7 @@ const char *MenuVoices[MAX_MENU_ITEMS] =
 	"Misure",
 	"Grafici",
 	"Log",
+	"Allarmi",
 	"Impostazioni",
 };
 
@@ -158,7 +159,7 @@ static uint8_t SearchRange(double Value2Search)
 				Range -= 1;
 			}
 			else
-				Range = 0;
+				Range = 9;
 			break;
 		}
 	}
@@ -327,6 +328,7 @@ void DrawMainMenu()
 {
 	bool ExitMainMenu = false;
 	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
@@ -339,32 +341,36 @@ void DrawMainMenu()
 			DrawTopInfo();
 			DrawNavButtons(DRAW_OK);
 		}
-		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(Item + 1) + "/" + String(MAX_MENU_ITEMS);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 20, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
 		Display.setCursor(CENTER_ALIGN("Menu"), MENU_TITLE_POS);
 		Display.print("Menu");
 		Display.setFont(Arial_18);
-		for(int i = 0; i < MAX_MENU_ITEMS; i++)
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
 		{
 			int NewItem = TopItem + i;
-			if(NewItem >= MAX_MENU_VIEW_ITEMS)
+			if(NewItem >= MAX_MENU_ITEMS)
 				break;
 			if(NewItem == Item)
 			{
 				Display.setTextColor(ILI9341_GREENYELLOW);
-				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[i]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
-										TEXT_LENGHT(MenuVoices[i]), ILI9341_GREENYELLOW);
-				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[i]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
-										TEXT_LENGHT(MenuVoices[i]), ILI9341_GREENYELLOW);
-				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[i]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
-										TEXT_LENGHT(MenuVoices[i]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(MenuVoices[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(MenuVoices[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(MenuVoices[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(MenuVoices[NewItem]), ILI9341_GREENYELLOW);
 			}
 			else
 			{
 				Display.setTextColor(ILI9341_WHITE);
 			}
-			Display.setCursor(CENTER_ALIGN(MenuVoices[i]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
-			Display.print(MenuVoices[i]);
+			Display.setCursor(CENTER_ALIGN(MenuVoices[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(MenuVoices[NewItem]);
 		}
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
@@ -384,10 +390,8 @@ void DrawMainMenu()
 			case OK:
 				AnalyzerPage = Item + 1;
 				ExitMainMenu = true;
-				DBG("Ok premuto");
 				break;
 			case BACK:
-				DBG("Back premuto");
 				break;
 			default:
 				break;
@@ -396,7 +400,7 @@ void DrawMainMenu()
 		if(OldItem != Item)
 		{
 			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 24, MENU_TITLE_POS + 8, 40, 16, ILI9341_BLACK);
 			OldItem = Item;
 		}
 		
@@ -445,6 +449,27 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 	{
 		*Measure = String((uint32_t)MeasureCpy);
 	}
+	else if(Type == DOUBLE_NO_FORMAT)
+	{
+		if((uint32_t)MeasureCpy == (uint32_t)PF_INVALID)
+			*Measure = "----";
+		else
+		{	
+			if(MeasureCpy < 0)
+			{
+				MeasureCpy = -MeasureCpy;
+				*Measure = String(MeasureCpy, 3);
+				*Measure += " CAP";
+			}
+			else if(MeasureCpy > 0)
+			{
+				*Measure = String(MeasureCpy, 3);
+				*Measure += " IND";
+			}
+			else
+				*Measure = String(MeasureCpy, 3);
+		}			
+	}
 	else
 	{
 		*Measure = String(MeasureCpy, 3);
@@ -465,9 +490,17 @@ static void FormatMaxMin(void *Measure2Format, String *Measure, String *Udm, uin
 		if(RangeTab[Range].odg != ' ')
 		{
 			*Udm = String(RangeTab[Range].odg);
-		}		
+		}
+		MeasureString = String(MeasureCpy, 3);		
 	}
-	MeasureString = String(MeasureCpy, 3);
+	else if(Type == DOUBLE_NO_FORMAT)
+	{
+		if((uint32_t)MeasureCpy == (uint32_t)PF_INVALID)
+			MeasureString = "----";
+		else
+			MeasureString = String(MeasureCpy, 3);		
+	}
+	
 	MeasureString.toCharArray(MaxMinStr, 6);
 	*Measure = String(MaxMinStr);
 }
@@ -594,12 +627,10 @@ void DrawMeasurePage()
 					Item = 0;			
 				break;
 			case OK:	
-				DBG("Ok premuto");
 				break;
 			case BACK:
 				AnalyzerPage = MAIN_MENU;
 				ExitMeasures = true;
-				DBG("Back premuto");
 				break;
 			default:
 				break;
@@ -615,6 +646,69 @@ void DrawMeasurePage()
 	}		
 }
 
+static void DrawGraph()
+{
+	int32_t y = 0, MaxValI = 0, MaxValV = 0;
+	Display.drawRoundRect(GRAPHIC_X, GRAPHIC_Y, GRAPHIC_W, GRAPHIC_H, 1, ILI9341_WHITE);
+	Display.drawFastVLine(GRAPHIC_X + (GRAPHIC_W / 2), GRAPHIC_Y, GRAPHIC_H, ILI9341_DARKGREY);
+	Display.drawFastHLine(GRAPHIC_X , GRAPHIC_HALF, GRAPHIC_W, ILI9341_DARKGREY);
+	if(Simulation)
+	{
+		for(int i = 0; i < GRAPHIC_W; i++)
+		{
+			if(MaxValI < (int32_t)SimCurrentRawVal[i])
+				MaxValI = (int32_t)SimCurrentRawVal[i];
+			if(MaxValV < (int32_t)SimVoltageRawVal[i])
+				MaxValV = (int32_t)SimVoltageRawVal[i];
+		}
+	
+		for(int i = 0; i < GRAPHIC_W; i++)
+		{
+			// CURRENT
+			if((int32_t)SimCurrentRawVal[i] > 0)
+				y = GRAPHIC_HALF - ((int32_t)SimCurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+			else
+				y = GRAPHIC_HALF - ((int32_t)SimCurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
+			
+			// VOLTAGE
+			if((int32_t)SimCurrentRawVal[i] > 0)
+				y = GRAPHIC_HALF - ((int32_t)SimVoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+			else
+				y = GRAPHIC_HALF - ((int32_t)SimVoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
+		}
+	}
+	else
+	{
+		for(int i = 0; i < GRAPHIC_W; i++)
+		{
+			if(MaxValI < CurrentRawVal[i])
+				MaxValI = CurrentRawVal[i];
+			if(MaxValV < VoltageRawVal[i])
+				MaxValV = VoltageRawVal[i];
+		}
+	
+		for(int i = 0; i < GRAPHIC_W; i++)
+		{
+			// CURRENT
+			if((int32_t)SimCurrentRawVal[i] > 0)
+				y = GRAPHIC_HALF - (CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+			else
+				y = GRAPHIC_HALF - (CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
+			
+			// VOLTAGE
+			if((int32_t)SimCurrentRawVal[i] > 0)
+				y = GRAPHIC_HALF - (VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+			else
+				y = GRAPHIC_HALF - (VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
+		}		
+	}
+}
+
+
 void DrawGraphicsPage()
 {
 	bool ExitGraphics = false;
@@ -625,16 +719,18 @@ void DrawGraphicsPage()
 	DrawNavButtons(DRAW_BACK);	
 	while(!ExitGraphics)
 	{
+		DoTasks();
 		if(DisplayRefresh.hasPassed(500, true))
 		{
 			DrawTopInfo();
 			DrawNavButtons(DRAW_BACK);
+			Display.fillRect(GRAPHIC_X + 1, GRAPHIC_Y + 1, GRAPHIC_W - 1, GRAPHIC_H - 1, ILI9341_BLACK);
 		}
 		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
 		Display.setCursor(CENTER_ALIGN("Grafici"), MENU_TITLE_POS);
 		Display.print("Grafici");
-		
+		DrawGraph();
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
@@ -651,12 +747,10 @@ void DrawGraphicsPage()
 					Item = 0;			
 				break;
 			case OK:	
-				DBG("Ok premuto");
 				break;
 			case BACK:
 				AnalyzerPage = MAIN_MENU;
 				ExitGraphics = true;
-				DBG("Back premuto");
 				break;
 			default:
 				break;
@@ -665,7 +759,6 @@ void DrawGraphicsPage()
 		if(OldItem != Item)
 		{
 			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
 			OldItem = Item;
 		}
 	}		
@@ -727,6 +820,62 @@ void DrawLogsPage()
 	}
 }
 
+
+void DrawAlarmPage()
+{
+	bool ExitLogs = false;
+	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_BACK);	
+	while(!ExitLogs)
+	{
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_BACK);
+		}
+		Display.setFont(Arial_24_Bold);
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setCursor(CENTER_ALIGN("Allarmi"), MENU_TITLE_POS);
+		Display.print("Allarmi");
+		
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(Item > 0)
+					Item--;
+				else
+					Item = MAX_MENU_ITEMS - 1;
+				break;
+			case DOWN:
+				if(Item < MAX_MENU_ITEMS - 1)
+					Item++;
+				else
+					Item = 0;			
+				break;
+			case OK:	
+				DBG("Ok premuto");
+				break;
+			case BACK:
+				AnalyzerPage = MAIN_MENU;
+				ExitLogs = true;
+				DBG("Back premuto");
+				break;
+			default:
+				break;
+		}
+	
+		if(OldItem != Item)
+		{
+			ClearMenu();
+			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
+			OldItem = Item;
+		}	
+	}
+}
 
 void DrawSettingPage()
 {

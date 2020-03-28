@@ -3,7 +3,7 @@
 #include "Measures.h"
 #include "Time.h"
 
-uint8_t AnalyzerPage = MAIN_MENU;
+uint8_t AnalyzerPage = GRAPHICS;
 
 void setup()
 {
@@ -28,6 +28,9 @@ void loop()
 			break;
 		case LOGS:
 			DrawLogsPage();
+			break;
+		case ALARMS:
+			DrawAlarmPage();
 			break;
 		case SETTINGS:
 			DrawSettingPage();

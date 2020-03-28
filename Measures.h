@@ -1,6 +1,19 @@
 #ifndef MEASURES_H
 #define MEASURES_H
 
+#define SIM_ON		true
+#define SIM_OFF		false
+
+#define SIM_CURR	        1
+#define SIM_VOLT	        220
+#define SIM_I_AMP(curr)		((curr * 4096 / 16) * 1.4142)
+#define SIM_V_AMP(volt)		((volt * 4096 / 230) * 1.4142)
+#define SIM_FRQ		         0.28
+#define SIM_DELAY_I          120
+#define SIM_DELAY_V          0
+
+#define PF_INVALID 2.0
+
 typedef struct
 {
 	double actual;
@@ -20,7 +33,16 @@ extern MEASURES_VAR EnAtt;
 extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
+extern int32_t CurrentRawVal[];
+extern int32_t VoltageRawVal[];
+
+extern double SimCurrentRawVal[];
+extern double SimVoltageRawVal[];
+
+extern bool Simulation;
+
 void AnalogInit();
 void GetMeasure();
+
 
 #endif

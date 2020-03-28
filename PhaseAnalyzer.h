@@ -1,6 +1,7 @@
 #ifndef PHASE_ANALYZER_H
 #define PHASE_ANALYZER_H
 
+#include <Arduino.h>
 #include <stdint.h>
 #include <Chrono.h>
 
@@ -24,6 +25,7 @@ typedef enum
 	MEASURE,
 	GRAPHICS,
 	LOGS,
+	ALARMS,
 	SETTINGS,
 	MAX_ANALYZER_PAGES
 }ANALYZER_PAGES;
@@ -33,6 +35,7 @@ typedef enum
 	MEASURE_ITEM = 0,
 	GRAPHICS_ITEM,
 	LOGS_ITEM,
+	ALARM_ITEM,
 	SETTINGS_ITEM,
 	MAX_MENU_ITEMS
 }MENU_ITEMS;
