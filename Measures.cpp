@@ -35,7 +35,7 @@ int32_t CurrentRawVal[N_SAMPLE], VoltageRawVal[N_SAMPLE];
 
 double SimCurrentRawVal[N_SAMPLE], SimVoltageRawVal[N_SAMPLE];
 
-bool Simulation = SIM_ON;
+bool simulationMode = SIM_ON;
 
 Chrono AvgTimer_1(Chrono::SECONDS), AvgTimer_2, EnergyTimer;
 
@@ -185,7 +185,7 @@ void GetMeasure()
 	double sqrtCurrent = 0.0, sqrtVoltage = 0.0;
 	double PAttAcc = 0.0;
 	bool InvalidPf = false;
-	if(!Simulation)
+	if(!simulationMode)
 	{
 		for(int i = 0; i < N_SAMPLE; i++)
 		{

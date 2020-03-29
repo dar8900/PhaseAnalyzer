@@ -3,7 +3,7 @@
 #include "Measures.h"
 #include "Time.h"
 
-uint8_t AnalyzerPage = GRAPHICS;
+uint8_t AnalyzerPage = SETTINGS;
 
 void setup()
 {

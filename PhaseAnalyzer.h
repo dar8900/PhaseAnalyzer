@@ -76,6 +76,15 @@ typedef enum
 	MAX_SETTINGS_PAGES
 }SETTINGS_PAGES;
 
+typedef struct
+{
+	bool overCurrentEnabled;
+	bool underCurrentEnabled;
+	bool overPAttEnabled;
+	bool underPAttEnabled;
+}ALARMS_FLAG;
+
+
 extern uint8_t AnalyzerPage;
 
 #endif

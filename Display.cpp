@@ -3,6 +3,7 @@
 #include "Touch.h"
 #include "Measures.h"
 #include "Time.h"
+#include "Settings.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -225,6 +226,26 @@ static void ClearDisplay(bool Inverse)
 		Display.fillScreen(ILI9341_BLACK);
 }
 
+void DrawPopUp(char *Msg, uint16_t Delay)
+{
+	uint32_t PopUpTimer = 0, PopUpTime = 0;
+	ClearDisplay(false);
+	Display.setTextColor(ILI9341_GREENYELLOW);
+	Display.setFont(Arial_28_Bold);	
+	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS);
+	Display.print(Msg);
+	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
+	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
+	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
+	PopUpTime = millis();
+	while(Delay > PopUpTimer)
+	{
+		DoTasks();
+		PopUpTimer = millis() - PopUpTime;
+	}
+	ClearDisplay(false);
+}
+
 void DisplaySetup(uint8_t Rotation)
 {
 	Display.begin();
@@ -315,7 +336,15 @@ static uint8_t ButtonPressed()
 		DisplayParam.isLongTouched = false;
 		if(DisplayParam.display_x >= NAV_BUTT_X_START && DisplayParam.display_x <= (NAV_BUTT_X_START + NAV_BUTT_WIDTH))
 		{
-			if(DisplayParam.display_y >= Ok_Back.y0 && DisplayParam.display_y <= (Ok_Back.y0 + Ok_Back.h))
+			if(DisplayParam.display_y >= Up.y0 && DisplayParam.display_y <= (Up.y0 + Up.h))
+			{
+				KeyPress = UP;
+			}
+			else if(DisplayParam.display_y >= Down.y0 && DisplayParam.display_y <= (Down.y0 + Down.h))
+			{
+				KeyPress = DOWN;
+			}
+			else if(DisplayParam.display_y >= Ok_Back.y0 && DisplayParam.display_y <= (Ok_Back.y0 + Ok_Back.h))
 			{
 				KeyPress = BACK;
 			}
@@ -652,7 +681,7 @@ static void DrawGraph()
 	Display.drawRoundRect(GRAPHIC_X, GRAPHIC_Y, GRAPHIC_W, GRAPHIC_H, 1, ILI9341_WHITE);
 	Display.drawFastVLine(GRAPHIC_X + (GRAPHIC_W / 2), GRAPHIC_Y, GRAPHIC_H, ILI9341_DARKGREY);
 	Display.drawFastHLine(GRAPHIC_X , GRAPHIC_HALF, GRAPHIC_W, ILI9341_DARKGREY);
-	if(Simulation)
+	if(simulationMode)
 	{
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
@@ -877,26 +906,365 @@ void DrawAlarmPage()
 	}
 }
 
-void DrawSettingPage()
+
+static void ChangeTimeDate(bool isTime)
 {
-	bool ExitSetting = false;
-	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	bool ExitChangeTimeDate = false;
+	uint8_t hour_day = 0, minute_month = 0, year = 0, BoxPos = 0,  KeyPress = MAX_KEY;
+	String TimeDateStr = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
-	DrawNavButtons(DRAW_BACK);
-	while(!ExitSetting)
+	DrawNavButtons(DRAW_OK);
+	if(isTime)
 	{
+		hour_day = Time.hour;
+		minute_month = Time.minute;
+		if(hour_day < 10)
+			TimeDateStr = "0" + String(hour_day);
+		else
+			TimeDateStr = String(hour_day);
+		if(minute_month < 10)
+			TimeStr += ":0" + String(minute_month);
+		else
+			TimeStr += ":" + String(minute_month);
+	}
+	else
+	{
+		hour_day = Time.day;
+		minute_month = Time.month;
+		BoxPos = 1;
+		year = Time.year % 100;
+		if(hour_day < 10)
+			DateStr = "0" + String(hour_day);
+		else
+			DateStr = String(hour_day);
+		if(minute_month < 10)
+			DateStr += "/0" + String(minute_month);
+		else
+			DateStr += "/" + String(minute_month);
+		
+		DateStr += "/" + String(year);
+	}
+	while(!ExitChangeTimeDate)
+	{
+		DoTasks();
 		if(DisplayRefresh.hasPassed(500, true))
 		{
 			DrawTopInfo();
-			DrawNavButtons(DRAW_BACK);
+			DrawNavButtons(DRAW_OK);
 		}
-		Display.setFont(Arial_24_Bold);
+		if(isTime)
+		{
+			if(hour_day < 10)
+				TimeDateStr = "0" + String(hour_day);
+			else
+				TimeDateStr = String(hour_day);
+			if(minute_month < 10)
+				TimeDateStr += ":0" + String(minute_month);
+			else
+				TimeDateStr += ":" + String(minute_month);
+		}
+		else
+		{
+			if(hour_day < 10)
+				TimeDateStr = "0" + String(hour_day);
+			else
+				TimeDateStr = String(hour_day);
+			if(minute_month < 10)
+				TimeDateStr += "/0" + String(minute_month);
+			else
+				TimeDateStr += "/" + String(minute_month);
+			
+			TimeDateStr += "/" + String(year);
+		}
 		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_24_Bold);
+		if(isTime)
+		{
+			Display.setCursor(CENTER_ALIGN("Cambia ora"), MENU_TITLE_POS);
+			Display.print("Cambia ora");
+		}
+		else
+		{
+			Display.setCursor(CENTER_ALIGN("Cambia data"), MENU_TITLE_POS);
+			Display.print("Cambia data");			
+		}
+		Display.setFont(Arial_32_Bold);
+		Display.setCursor(CENTER_ALIGN(TimeDateStr.c_str()), CENTER_POS);
+		Display.print(TimeDateStr.c_str());
+		Display.drawRoundRect(CENTER_ALIGN(TimeDateStr.c_str()) - 2 + (BoxPos * (50 + 10)), CENTER_POS - 2, 
+							  52, 35, 1, ILI9341_CYAN);
+		
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(isTime)
+				{
+					switch(BoxPos)
+					{
+						case 0:
+							if(hour_day > 0)
+								hour_day--;
+							else
+								hour_day = 23;
+							break;
+						case 1:
+							if(minute_month > 0)
+								minute_month--;
+							else
+								minute_month = 59;							
+							break;
+						default:
+							break;
+					}
+				}
+				else
+				{
+					switch(BoxPos)
+					{
+						case 0:
+							if(hour_day > 1)
+								hour_day--;
+							else
+								hour_day = Day4Month[minute_month - 1];
+							break;
+						case 1:
+							if(minute_month > 1)
+								minute_month--;
+							else
+								minute_month = 12;
+							break;
+						case 2:
+							if(year > 20)
+								year--;
+							else
+								year = 99;
+							break;
+						default:
+							break;
+					}					
+				}
+				break;
+			case DOWN:	
+				if(isTime)
+				{
+					switch(BoxPos)
+					{
+							case 0:
+							if(hour_day < 23)
+								hour_day++;
+							else
+								hour_day = 0;
+							break;
+						case 1:
+							if(minute_month < 59)
+								minute_month++;
+							else
+								minute_month = 0;							
+							break;
+						default:
+							break;
+					}					
+				}
+				else
+				{
+					switch(BoxPos)
+					{
+						case 0:
+							if(hour_day < Day4Month[minute_month - 1])
+								hour_day++;
+							else
+								hour_day = 1;
+							break;
+						case 1:
+							if(minute_month < 12)
+								minute_month++;
+							else
+								minute_month = 1;
+							break;
+						case 2:
+							if(year < 99)
+								year++;
+							else
+								year = 20;
+							break;
+						default:
+							break;
+					}					
+				}
+				break;
+			case OK:
+				if(isTime)
+					BoxPos++;
+				else
+				{
+					if(BoxPos == 1)
+						BoxPos = 0;
+					else if(BoxPos == 0)
+						BoxPos = 2;
+					else if(BoxPos == 2)
+						BoxPos++;
+				}
+				if(isTime && BoxPos > 1)
+				{
+					SetTime(hour_day, minute_month);
+					ExitChangeTimeDate = true;
+					DrawPopUp("Ora cambiata", 1000);
+				}
+				if(!isTime && BoxPos > 2)
+				{
+					SetDate(hour_day, minute_month, year);
+					ExitChangeTimeDate = true;
+					DrawPopUp("Data cambiata", 1000);	
+				}
+				break;
+			case BACK:
+				ExitChangeTimeDate = true;
+				break;
+			default:
+				break;
+		}
+	
+		if(KeyPress != MAX_KEY)
+		{
+			ClearMenu();
+		}
+	}
+}
+
+static void ChangeValue(uint8_t SettingIndex)
+{
+	bool ExitChangeValue = false;
+	uint8_t KeyPress = MAX_KEY, BoxPos = 0;
+	int32_t NewValue = *(int32_t*)Settings[SettingIndex].settingVal;
+	String ValueStr = "";
+	uint8_t MaxValueLenght = String(Settings[SettingIndex].settingMax).length(), ActualValueLen = String(NewValue).length();
+	char SingleVal = ' ';
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);	
+	for(int i = 0; i < (MaxValueLenght - ActualValueLen); i++)
+		ValueStr += "0";
+	ValueStr += String(NewValue);
+	
+	SingleVal = ValueStr.charAt(BoxPos);
+	while(!ExitChangeValue)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
+		Display.print(Settings[SettingIndex].settingName);
+		Display.setFont(Arial_32_Bold);
+		Display.setCursor(CENTER_ALIGN(ValueStr.c_str()), CENTER_POS);
+		Display.print(ValueStr.c_str());
+		Display.drawRoundRect(CENTER_ALIGN(ValueStr.c_str()) - 2 + (BoxPos * 25), CENTER_POS - 2, 
+							  25, 35, 1, ILI9341_CYAN);
+							  
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_16_Bold);	
+		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].udm), CENTER_POS + 55);
+		Display.print(Settings[SettingIndex].udm);
+		
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:
+				if(SingleVal > '0')
+					SingleVal--;
+				else 
+					SingleVal = '9';
+				ValueStr.setCharAt(BoxPos, SingleVal);
+				break;
+			case DOWN:
+				if(SingleVal < '9')
+					SingleVal++;
+				else 
+					SingleVal = '0';
+				ValueStr.setCharAt(BoxPos, SingleVal);
+				break;
+			case OK:
+				BoxPos++;
+				SingleVal = ValueStr.charAt(BoxPos);
+				if(BoxPos > MaxValueLenght - 1)
+				{
+					NewValue = ValueStr.toInt();
+					if(NewValue >= Settings[SettingIndex].settingMin && NewValue <= Settings[SettingIndex].settingMax)
+						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
+					else
+						DrawPopUp("Valore errato", 1000);
+					ExitChangeValue = true;
+				}
+				break;
+			case BACK:
+				ExitChangeValue = true;
+				break;
+			default:
+				break;
+		}
+		if(KeyPress != MAX_KEY)
+		{
+			ClearMenu();
+		}				
+	}
+}
+
+void DrawSettingPage()
+{
+	bool ExitSetting = false, ChangeSettingPage = false;
+	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);
+	while(!ExitSetting)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(Item + 1) + "/" + String(MAX_SETTINGS);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
 		Display.setCursor(CENTER_ALIGN("Impostazioni"), MENU_TITLE_POS);
 		Display.print("Impostazioni");
-		
+		Display.setFont(Arial_18);
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+		{
+			int NewItem = TopItem + i;
+			if(NewItem >= MAX_SETTINGS)
+				break;
+			if(NewItem == Item)
+			{
+				Display.setTextColor(ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(Settings[NewItem].settingName), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(Settings[NewItem].settingName), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(Settings[NewItem].settingName), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(Settings[NewItem].settingName), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(Settings[NewItem].settingName), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(Settings[NewItem].settingName), ILI9341_GREENYELLOW);
+			}
+			else
+			{
+				Display.setTextColor(ILI9341_WHITE);
+			}
+			Display.setCursor(CENTER_ALIGN(Settings[NewItem].settingName), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(Settings[NewItem].settingName);
+		}
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
@@ -904,21 +1272,20 @@ void DrawSettingPage()
 				if(Item > 0)
 					Item--;
 				else
-					Item = MAX_MENU_ITEMS - 1;
+					Item = MAX_SETTINGS - 1;
 				break;
 			case DOWN:
-				if(Item < MAX_MENU_ITEMS - 1)
+				if(Item < MAX_SETTINGS - 1)
 					Item++;
 				else
 					Item = 0;			
 				break;
 			case OK:	
-				DBG("Ok premuto");
+				ChangeSettingPage = true;
 				break;
 			case BACK:
 				AnalyzerPage = MAIN_MENU;
 				ExitSetting = true;
-				DBG("Back premuto");
 				break;
 			default:
 				break;
@@ -927,8 +1294,33 @@ void DrawSettingPage()
 		if(OldItem != Item)
 		{
 			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 14, MENU_TITLE_POS + 8, 50, 16, ILI9341_BLACK);
 			OldItem = Item;
 		}	
+		if(Item > MAX_MENU_VIEW_ITEMS - 1)
+		{
+			TopItem = Item - (MAX_MENU_VIEW_ITEMS - 1);
+		}
+		else
+			TopItem = 0;
+		if(ChangeSettingPage)
+		{
+			ChangeSettingPage = false;
+			switch(Settings[Item].type)
+			{
+				case DATE_TYPE:
+					if(Item == CHANGE_TIME)
+						ChangeTimeDate(true);
+					else
+						ChangeTimeDate(false);
+					break;
+				case VALUE_TYPE:
+					ChangeValue(Item);
+					break;
+				default:
+					break;
+			}
+			ClearDisplay(false);
+		}
 	}
 }

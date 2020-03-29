@@ -17,8 +17,11 @@ typedef struct
 extern TIME_VAR Time;
 extern String TimeStr;
 extern String DateStr;
+extern const uint8_t Day4Month[];
 
 void RtcInit();
 void GetTime();
+void SetTime(uint8_t NewHour, uint8_t NewMinute);
+void SetDate(uint8_t NewDay, uint8_t NewMonth, uint8_t NewYear);
 
 #endif

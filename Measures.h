@@ -39,7 +39,7 @@ extern int32_t VoltageRawVal[];
 extern double SimCurrentRawVal[];
 extern double SimVoltageRawVal[];
 
-extern bool Simulation;
+extern bool simulationMode;
 
 void AnalogInit();
 void GetMeasure();

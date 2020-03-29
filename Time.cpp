@@ -5,6 +5,21 @@
 static RTC_DS1307 rtc;
 static DateTime RtcTimeDate;
 
+const uint8_t Day4Month[12] = 
+{
+	31, 
+	28,
+	31,
+	30,
+	31,
+	30,
+	31,
+	31,
+	30,
+	31,
+	30,
+	31,
+};
 
 TIME_VAR Time;
 String TimeStr;
@@ -65,4 +80,14 @@ void GetTime()
 		TimeStr = "--:--";
 		DateStr = "--/--/--";
 	}
+}
+
+void SetTime(uint8_t NewHour, uint8_t NewMinute)
+{
+	rtc.adjust(DateTime(Time.year, Time.month, Time.day, NewHour, NewMinute, 0));
+}
+
+void SetDate(uint8_t NewDay, uint8_t NewMonth, uint8_t NewYear)
+{
+	rtc.adjust(DateTime(NewYear + 2000, NewMonth, NewDay, Time.hour, Time.minute, Time.second));
 }

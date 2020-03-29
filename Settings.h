@@ -3,26 +3,17 @@
 
 typedef enum
 {
-	VALUE_TYPE = 0,
-	ENUM_TYPE,
-	DATE_TYPE,
-	MAX_TYPE
-}SETTING_TYPE;
+	LOG_MEASURE_TYPE = 0,
+	BOOLEAN_TYPE,
+	MAX_ENUM_TYPE
+}ENUM_TAB_TYPE;
 
-typedef struct
-{
-	int32_t *settingVal;
-	int32_t settingMax;
-	int32_t settingMin;
-	uint8_t type;
-	char *udm;
-	char *settingName;
-}SETTING_DEF;
 
 typedef struct
 {
 	void *enumValuePtr;
 	char *enumName;
+	uint8_t enumType;
 }ENUM_VAL;
 
 typedef enum
@@ -52,8 +43,30 @@ typedef enum
 	UNDER_ATT_POWER_VALUE,
 	ENABLE_UNDER_PATT_POWER,
 	AVG_TIME,
+	SIMULATION_MODE,
 	MAX_SETTINGS
 }SETTINGS_LIST;
 
+typedef enum
+{
+	VALUE_TYPE = 0,
+	ENUM_TYPE,
+	DATE_TYPE,
+	MAX_TYPE
+}SETTING_TYPE;
+
+typedef struct
+{
+	int32_t *settingVal;
+	int32_t settingMin;
+	int32_t settingMax;
+	uint8_t type;
+	ENUM_VAL *enumPtr;
+	char *udm;
+	char *settingName;
+}SETTING_DEF;
+
+extern int32_t SettingsVals[];
+extern const SETTING_DEF Settings[];
 
 #endif
