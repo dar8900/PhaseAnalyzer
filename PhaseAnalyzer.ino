@@ -2,6 +2,7 @@
 #include "Display.h"
 #include "Measures.h"
 #include "Time.h"
+#include "EepromAnalyzer.h"
 
 uint8_t AnalyzerPage = SETTINGS;
 
@@ -11,6 +12,7 @@ void setup()
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
 	RtcInit();
+	InitMemory();
 }
 
 void loop()

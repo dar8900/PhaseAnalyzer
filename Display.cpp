@@ -4,6 +4,7 @@
 #include "Measures.h"
 #include "Time.h"
 #include "Settings.h"
+#include "EepromAnalyzer.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -1198,7 +1199,11 @@ static void ChangeValue(uint8_t SettingIndex)
 				{
 					NewValue = ValueStr.toInt();
 					if(NewValue >= Settings[SettingIndex].settingMin && NewValue <= Settings[SettingIndex].settingMax)
+					{
 						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
+						WriteSetting(SettingIndex, NewValue);
+						DrawPopUp("Valore salvato", 1000);
+					}
 					else
 						DrawPopUp("Valore errato", 1000);
 					ExitChangeValue = true;
@@ -1215,6 +1220,70 @@ static void ChangeValue(uint8_t SettingIndex)
 			ClearMenu();
 		}				
 	}
+}
+
+static void ChangeEnum(uint8_t SettingIndex)
+{
+	bool ExitChangeEnum = false;
+	uint8_t KeyPress = MAX_KEY, BoxPos = 0;
+	int32_t EnumItem = *(int32_t*)Settings[SettingIndex].settingVal;
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);	
+
+	while(!ExitChangeEnum)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
+		Display.print(Settings[SettingIndex].settingName);
+		Display.setFont(Arial_28_Bold);
+		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName), CENTER_POS);
+		Display.print(Settings[SettingIndex].enumPtr[EnumItem].enumName);
+		Display.drawRoundRect(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName)), 
+								CENTER_POS - 2, 
+								TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
+							  
+		
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:
+				if(EnumItem > 0)
+					EnumItem--;
+				else
+					EnumItem = Settings[SettingIndex].settingMax;
+				break;
+			case DOWN:
+				if(EnumItem < Settings[SettingIndex].settingMax)
+					EnumItem++;
+				else
+					EnumItem = 0;
+				break;
+			case OK:
+				*(int32_t*)Settings[SettingIndex].settingVal = EnumItem;
+				WriteSetting(SettingIndex, EnumItem);
+				DrawPopUp("Valore salvato", 1000);
+				ExitChangeEnum = true;
+				break;
+			case BACK:
+				ExitChangeEnum = true;
+				break;
+			default:
+				break;
+		}
+		if(KeyPress != MAX_KEY)
+		{
+			ClearMenu();
+		}				
+	}	
 }
 
 void DrawSettingPage()
@@ -1316,6 +1385,9 @@ void DrawSettingPage()
 					break;
 				case VALUE_TYPE:
 					ChangeValue(Item);
+					break;
+				case ENUM_TYPE:
+					ChangeEnum(Item);
 					break;
 				default:
 					break;

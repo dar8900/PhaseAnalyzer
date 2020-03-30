@@ -124,6 +124,7 @@ extern DISPLAY_VAR DisplayParam;
 
 void DisplaySetup(uint8_t Rotation);
 void DisplaySetRotation(uint8_t Rotation);
+void DrawPopUp(char *Msg, uint16_t Delay);
 
 void DrawMainMenu();
 void DrawMeasurePage();
