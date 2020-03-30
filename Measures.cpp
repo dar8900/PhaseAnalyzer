@@ -2,6 +2,7 @@
 #include "Measures.h"
 #include <ADC.h>
 #include <ADC_util.h>
+#include "Settings.h"
 
 #define CURRENT_PIN	A9
 #define VOLTAGE_PIN	A2
@@ -119,7 +120,7 @@ static void CalcMaxAvg(MEASURES_VAR *Measure)
 
 static void CalcAvg()
 {
-	if(AvgTimer_1.hasPassed(MIN_TO_SEC(1), true))
+	if(AvgTimer_1.hasPassed(MIN_TO_SEC(SettingsVals[AVG_TIME]), true))
 	{
 		Current.avg = CurrentAvgAcc / CurrentAvgCnt;
 		Voltage.avg = VoltageAvgAcc / VoltageAvgCnt;

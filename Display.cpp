@@ -36,8 +36,9 @@ typedef enum
 	UINT,
 	DOUBLE,
 	DOUBLE_NO_FORMAT,
+	TIME_TYPE,
 	MAX_TYPES
-}TYPES;
+}MEASURE_TYPES;
 
 typedef struct
 {
@@ -85,8 +86,8 @@ const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] =
 	{&EnRea.actual   , NULL             , NULL        , "VArh", DOUBLE 		     } , 
 	{&EnApp.actual   , NULL             , NULL  	  , "VAh" , DOUBLE 		     }},
 	
-	{{&Time.liveCnt  , NULL        		, NULL        , "s"   , UINT   		     }, 
-	{		   NULL  , NULL             , NULL        , ""    , NO_TYPE		     } , 
+	{{		   NULL  , NULL             , NULL        , ""    , NO_TYPE		     } , 
+	{&Time.liveCnt  , NULL        		, NULL        , ""    , TIME_TYPE	     }, 
 	{	       NULL  , NULL             , NULL  	  , ""    , NO_TYPE		     }},
 };
 
@@ -299,12 +300,18 @@ static void DrawNavButtons(bool DrawBackButt)
 
 static void DrawTopInfo()
 {
+	String Info = "";
 	GetTime();
 	Display.fillRect(0, 0, DISPLAY_WIDTH, 20, ILI9341_BLACK);
 	Display.setTextColor(ILI9341_WHITE);
 	Display.setFont(Arial_12);
 	Display.setCursor(LEFT_ALIGN, TOP_POS);
 	Display.print(TimeStr.c_str());
+	Info += ("FW" + String(FW_VERSION, 1));
+	if(simulationMode)
+		Info += " DEMO";
+	Display.setCursor(CENTER_ALIGN(Info.c_str()), TOP_POS);
+	Display.print(Info.c_str());
 	Display.setCursor(RIGHT_ALIGN(DateStr.c_str()), TOP_POS);
 	Display.print(DateStr.c_str());
 }
@@ -453,6 +460,7 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 			MeasureCpy = (double)*(int32_t*)Measure2Format;
 			break;
 		case UINT:
+		case TIME_TYPE:
 			MeasureCpy = (double)*(uint32_t*)Measure2Format;
 			break;
 		case DOUBLE:
@@ -465,7 +473,7 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 	}
 	
 	uint8_t Range = 0;
-	if(Type != DOUBLE_NO_FORMAT && Type > UINT)
+	if(Type == DOUBLE)
 	{
 		Range = SearchRange(MeasureCpy);
 		MeasureCpy *= RangeTab[Range].rescale;
@@ -478,6 +486,18 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 	else if(Type == UINT)
 	{
 		*Measure = String((uint32_t)MeasureCpy);
+	}
+	else if(Type == TIME_TYPE)
+	{
+		uint32_t timeVar = (uint32_t)MeasureCpy;
+		uint8_t sec = 0, min = 0, hour = 0;
+		*Measure = "";
+		hour = timeVar / 3600;
+		min = (timeVar / 60) % 60;
+		sec = timeVar % 60;
+		*Measure += (hour < 10 ? ("0" + String(hour) + ":"): String(hour) + ":");
+		*Measure += (min < 10 ? ("0" + String(min) + ":"): String(min) + ":");
+		*Measure += (sec < 10 ? ("0" + String(sec)): String(sec));
 	}
 	else if(Type == DOUBLE_NO_FORMAT)
 	{
@@ -1270,6 +1290,16 @@ static void ChangeEnum(uint8_t SettingIndex)
 			case OK:
 				*(int32_t*)Settings[SettingIndex].settingVal = EnumItem;
 				WriteSetting(SettingIndex, EnumItem);
+				switch(Settings[SettingIndex].enumPtr[EnumItem].enumType)
+				{
+					case BOOLEAN_TYPE:
+						*(bool *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (bool)EnumItem;
+						break;
+					case LOG_MEASURE_TYPE:
+					default:
+						break;
+				}
+				
 				DrawPopUp("Valore salvato", 1000);
 				ExitChangeEnum = true;
 				break;
