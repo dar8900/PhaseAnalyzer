@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "EepromAnalyzer.h"
 #include "Alarms.h"
+#include "Logs.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -128,17 +129,25 @@ const uint8_t AlarmIcon[] =
 	0x66, 0x60, 0xc0, 0x30, 0xff, 0xf0, 0x3f, 0xc0, 
 };
 
+const uint8_t LogIcon[] =
+{
+	0x07, 0xf0, 0x1c, 0x10, 0x33, 0xd0, 0x60, 0x50, 
+	0xc0, 0x10, 0x83, 0xd0, 0xfb, 0xd0, 0x80, 0x10, 
+	0x81, 0xd0, 0xfa, 0x50, 0x80, 0x90, 0xff, 0xf0, 
+};
+
 XPT2046_Touchscreen Touch(CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
-Chrono TimeRefresh, DisplayRefresh, MeasureRefresh;
+Chrono TimeRefresh, DisplayRefresh, MeasureRefresh, LogInconTimer;
+static bool LogInconToggle;
 
 NAV_BUTTON_COORD Up = {NAV_BUTT_X_START, NAV_BUTT_Y_START, NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
 NAV_BUTTON_COORD Down = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (2 * (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE)), NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
 NAV_BUTTON_COORD Ok_Back = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE), NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_GREEN};
 	
-
+String LogList[MAX_LOGS];
 
 const char *MenuVoices[MAX_MENU_ITEMS] = 
 {
@@ -206,6 +215,7 @@ void DoTasks()
 	if(TimeRefresh.hasPassed(1000, true))
 		Time.liveCnt++;
 	CheckAlarms();
+	LogMeasure();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -451,6 +461,20 @@ static void DrawTopInfo()
 	Display.print(DateStr.c_str());
 	if(AlarmPresence())
 		Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 3, TOP_POS, AlarmIcon, 12, 12, ILI9341_YELLOW);
+	if(EnableLog)
+	{
+		if(LogInconTimer.hasPassed(500, true))
+		{
+			LogInconToggle = !LogInconToggle;
+		}
+		if(LogInconToggle)
+			Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 18, TOP_POS, LogIcon, 12, 12, ILI9341_GREEN);
+	}
+	else
+	{
+		LogInconTimer.restart();
+		LogInconToggle = false;
+	}
 }
 
 
@@ -914,59 +938,161 @@ void DrawGraphicsPage()
 	}		
 }
 
+
+static void FillLogList()
+{
+	for(int i = 0; i < MAX_LOGS; i++)
+	{
+		if(i < LastLogIndex)
+		{
+			DateTime LogTime(LogBuffer[i].timeStamp);				
+			LogList[i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
+			LogList[i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
+			LogList[i] += ":" + (LogTime.second() < 10 ? "0" + String(LogTime.second()) : String(LogTime.second()));
+			LogList[i] += "  " + (LogTime.day() < 10 ? "0" + String(LogTime.day()) : String(LogTime.day()));
+			LogList[i] += "/" + (LogTime.month() < 10 ? "0" + String(LogTime.month()) : String(LogTime.month()));
+			LogList[i] += "/" + String(LogTime.year() % 100);
+			LogList[i] += " " + String(LogBuffer[i].logMeasure, 3);
+			switch(MeasureToLog)
+			{
+				case CURRENT_LOG:
+					LogList[i] += "A";
+					break;
+				case VOLTAGE_LOG:
+					LogList[i] += "V";
+					break;
+				case P_ATT_LOG:
+					LogList[i] += "W";
+					break;
+				case PREA_LOG:
+					LogList[i] += "VAr";
+					break;
+				case P_APP_LOG:
+					LogList[i] += "VA";
+					break;
+				case PF_LOG:
+					LogList[i] += "";
+					break;
+				default:
+					break;
+			}
+		}
+		else
+		{
+			LogList[i] = "";
+		}
+	}
+}
+
+static void ViewDetailLog(uint8_t LogItem)
+{
+	
+}
+
 void DrawLogsPage()
 {
-	bool ExitLogs = false;
-	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	bool ExitLogs = false, RefreshNumPage = false;
+	uint8_t TopItem = 0, LogItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
-	DrawNavButtons(DRAW_BACK);	
-	while(!ExitLogs)
+	DrawNavButtons(DRAW_OK);	
+	if(LastLogIndex != 0)
 	{
-		if(DisplayRefresh.hasPassed(500, true))
+		while(!ExitLogs)
 		{
-			DrawTopInfo();
-			DrawNavButtons(DRAW_BACK);
-		}
-		Display.setFont(Arial_24_Bold);
-		Display.setTextColor(ILI9341_WHITE);
-		Display.setCursor(CENTER_ALIGN("Log"), MENU_TITLE_POS);
-		Display.print("Log");
+			DoTasks();
+			FillLogList();
+			if(DisplayRefresh.hasPassed(500, true))
+			{
+				DrawTopInfo();
+				DrawNavButtons(DRAW_OK);
+				ClearMenu();
+				RefreshNumPage = true;
+			}
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setFont(Arial_12);
+			NumPage = String(LogItem + 1) + "/" + String(LastLogIndex);
+			Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+			Display.print(NumPage.c_str());
+			Display.setFont(Arial_24_Bold);
+			Display.setCursor(CENTER_ALIGN("Log"), MENU_TITLE_POS);
+			Display.print("Log");
+			Display.setFont(Arial_13);
+			for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+			{
+				int NewItem = TopItem + i;
+				if(NewItem >= LastLogIndex)
+					break;
+				if(NewItem == LogItem)
+				{
+					Display.setTextColor(ILI9341_GREENYELLOW);
+					Display.drawFastHLine(CENTER_ALIGN(LogList[NewItem].c_str()) - 10, MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+											TEXT_LENGHT(LogList[NewItem].c_str()), ILI9341_GREENYELLOW);
+					Display.drawFastHLine(CENTER_ALIGN(LogList[NewItem].c_str()) - 10, MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+											TEXT_LENGHT(LogList[NewItem].c_str()), ILI9341_GREENYELLOW);
+					Display.drawFastHLine(CENTER_ALIGN(LogList[NewItem].c_str()) - 10, MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+											TEXT_LENGHT(LogList[NewItem].c_str()), ILI9341_GREENYELLOW);
+				}
+				else
+				{
+					Display.setTextColor(ILI9341_WHITE);
+				}
+				Display.setCursor(CENTER_ALIGN(LogList[NewItem].c_str()) - 10, MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+				Display.print(LogList[NewItem].c_str());
+			}
+			KeyPress = ButtonPressed();
+			switch(KeyPress)
+			{
+				case UP:	
+					if(LogItem > 0)
+						LogItem--;
+					else
+						LogItem = LastLogIndex - 1;
+					break;
+				case DOWN:
+					if(LogItem < LastLogIndex - 1)
+						LogItem++;
+					else
+						LogItem = 0;			
+					break;
+				case OK:	
+					// ViewDetailLog(LogItem);
+					ClearDisplay(false);
+					break;
+				case BACK:
+					AnalyzerPage = MAIN_MENU;
+					ExitLogs = true;
+					break;
+				default:
+					break;
+			}
 		
-		KeyPress = ButtonPressed();
-		switch(KeyPress)
-		{
-			case UP:	
-				if(Item > 0)
-					Item--;
-				else
-					Item = MAX_MENU_ITEMS - 1;
-				break;
-			case DOWN:
-				if(Item < MAX_MENU_ITEMS - 1)
-					Item++;
-				else
-					Item = 0;			
-				break;
-			case OK:	
-				DBG("Ok premuto");
-				break;
-			case BACK:
-				AnalyzerPage = MAIN_MENU;
-				ExitLogs = true;
-				DBG("Back premuto");
-				break;
-			default:
-				break;
+			if(RefreshNumPage)
+			{
+				Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 22, MENU_TITLE_POS + 8, TEXT_LENGHT(NumPage.c_str()) + 22, 16, ILI9341_BLACK);
+				RefreshNumPage = false;
+			}
+		
+			if(OldItem != LogItem)
+			{
+				ClearMenu();
+				OldItem = LogItem;
+			}	
+
+			if(LogItem > MAX_MENU_VIEW_ITEMS - 1)
+			{
+				TopItem = LogItem - (MAX_MENU_VIEW_ITEMS - 1);
+			}
+			else
+				TopItem = 0;
 		}
-	
-		if(OldItem != Item)
-		{
-			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
-			OldItem = Item;
-		}	
+	}
+	else
+	{
+		AnalyzerPage = MAIN_MENU;
+		DrawPopUp("Nessun log", 2000);
 	}
 }
 
@@ -1430,8 +1556,6 @@ static void ChangeValue(uint8_t SettingIndex)
 						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
 						WriteSetting(SettingIndex, NewValue);
 						DrawPopUp("Valore salvato", 1000);
-						for(int i = 0; i < MAX_SETTINGS; i++)
-							DBG(SettingsVals[i]);
 					}
 					else
 						DrawPopUp("Valore errato", 1000);
@@ -1507,6 +1631,8 @@ static void ChangeEnum(uint8_t SettingIndex)
 						*(bool *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (bool)EnumItem;
 						break;
 					case LOG_MEASURE_TYPE:
+						*(uint8_t *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (uint8_t)EnumItem;
+						break;
 					default:
 						break;
 				}

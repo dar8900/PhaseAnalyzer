@@ -1,9 +1,9 @@
 #include "PhaseAnalyzer.h"
 #include "Time.h"
-#include "RTClib.h"
+
 
 static RTC_DS1307 rtc;
-static DateTime RtcTimeDate;
+DateTime RtcTimeDate;
 
 const uint8_t Day4Month[12] = 
 {

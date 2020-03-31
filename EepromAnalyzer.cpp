@@ -1,7 +1,6 @@
 #include "PhaseAnalyzer.h"
 #include "Settings.h"
 #include "EepromAnalyzer.h"
-#include <EEPROM.h>
 #include "Display.h"
 
 #define MAX_SETTINGS_MEMORY 	256	 // Max 64 settaggi
@@ -14,8 +13,7 @@
 
 #define RESET_DFLT_ADDR			550 // +1 bytes -> 551
 
-#define LOGS_START_ADDR		   1024
-#define LOGS_CHECKSUM_ADDR	   1018 // +4 bytes -> 1022
+
 
 
 bool InitMemory()
@@ -126,6 +124,8 @@ void ReadAllSettings()
 					*(bool *)Settings[settingIndex].enumPtr[0].enumValuePtr = (bool)SettingsVals[settingIndex];
 					break;
 				case LOG_MEASURE_TYPE:
+					*(uint8_t *)Settings[settingIndex].enumPtr[0].enumValuePtr = (uint8_t)SettingsVals[settingIndex];
+					break;
 				default:
 					break;
 			}

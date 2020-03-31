@@ -23,16 +23,6 @@ typedef enum
 	MAX_ENUM_ENABLE
 }ENUM_ENABLE;
 
-typedef enum
-{
-	CURRENT_LOG = 0,
-	VOLTAGE_LOG,
-	P_ATT_LOG,
-	PREA_LOG,
-	P_APP_LOG,
-	PF_LOG,
-	MAX_MEASURE_LOG
-}LOGS_MEASURES;
 
 typedef enum
 {

@@ -1,6 +1,7 @@
 #ifndef TIME_H
 #define TIME_H
 #include <Arduino.h>
+#include <RTClib.h>
 
 typedef struct 
 {
@@ -18,6 +19,7 @@ extern TIME_VAR Time;
 extern String TimeStr;
 extern String DateStr;
 extern const uint8_t Day4Month[];
+extern DateTime RtcTimeDate;
 
 void RtcInit();
 void GetTime();

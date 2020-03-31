@@ -2,6 +2,7 @@
 #include "Settings.h"
 #include "Measures.h"
 #include "Alarms.h"
+#include "Logs.h"
 
 int32_t SettingsVals[MAX_SETTINGS];
 
@@ -25,25 +26,21 @@ const int32_t SettingsDefVal[MAX_SETTINGS] =
 	DISABLED,				//SIMULATION_MODE,               
 };
 
-bool enableLog;
-
-
-
 
 const ENUM_VAL LogMeasureEnum[MAX_MEASURE_LOG] = 
 {
-	{&Current.actual, "Corrente"         , LOG_MEASURE_TYPE},
-	{&Voltage.actual, "Tensione"		 , LOG_MEASURE_TYPE},
-	{&PAtt.actual	, "Potenza att."     , LOG_MEASURE_TYPE},
-	{&PRea.actual	, "Potenza rea."     , LOG_MEASURE_TYPE},
-	{&PApp.actual	, "Potenza app."     , LOG_MEASURE_TYPE},
-	{&Pf.actual		, "PF"	        	 , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "Corrente"         , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "Tensione"		   , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "Potenza att."     , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "Potenza rea."     , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "Potenza app."     , LOG_MEASURE_TYPE},
+	{&MeasureToLog, "PF"	           , LOG_MEASURE_TYPE},
 };
 
 const ENUM_VAL LogEnable[2] = 
 {
-	{&enableLog, "Disabilitato"   , BOOLEAN_TYPE},
-	{&enableLog, "Abilitato"      , BOOLEAN_TYPE},
+	{&EnableLog, "Disabilitato"   , BOOLEAN_TYPE},
+	{&EnableLog, "Abilitato"      , BOOLEAN_TYPE},
 };
 
 const ENUM_VAL OverCurrentEnableEnum[2] = 

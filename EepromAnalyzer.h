@@ -2,6 +2,7 @@
 #define EEPROM_ANALYZER_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 
 bool InitMemory();
 bool SettingToDefault();
