@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <Chrono.h>
 
+#define CPU_RESTART_ADDR (uint32_t *)0xE000ED0C
+#define CPU_RESTART_VAL 0x5FA0004
+#define CPU_RESTART (*CPU_RESTART_ADDR = CPU_RESTART_VAL);
+
 #define DEBUG
 
 #ifdef DEBUG
@@ -29,6 +33,7 @@ typedef enum
 	LOGS,
 	ALARMS,
 	SETTINGS,
+	RESETS,
 	MAX_ANALYZER_PAGES
 }ANALYZER_PAGES;
 
@@ -39,6 +44,7 @@ typedef enum
 	LOGS_ITEM,
 	ALARM_ITEM,
 	SETTINGS_ITEM,
+	RESET_ITEM,
 	MAX_MENU_ITEMS
 }MENU_ITEMS;
 
@@ -69,6 +75,16 @@ typedef enum
 
 typedef enum
 {
+	OVER_CURRENT_ALARM = 0,
+	UNDER_CURRENT_ALARM,
+	OVER_PATT_ALARM,
+	UNDER_PATT_ALARM,
+	MAX_ALARMS
+}ALARMS_PAGES;
+
+
+typedef enum
+{
 	SET_TIME = 0,
 	SET_DATE,
 	MEASURE_LOG,
@@ -78,13 +94,16 @@ typedef enum
 	MAX_SETTINGS_PAGES
 }SETTINGS_PAGES;
 
-typedef struct
+typedef enum
 {
-	bool overCurrentEnabled;
-	bool underCurrentEnabled;
-	bool overPAttEnabled;
-	bool underPAttEnabled;
-}ALARMS_FLAG;
+	RESET_DFLT = 0,
+	RESTART,
+	RESET_MAX_MIN,
+	RESET_AVG,
+	RESET_ENERGIES,
+	RESET_LOG,
+	MAX_RESETS
+}RESET_PAGES;
 
 
 extern uint8_t AnalyzerPage;

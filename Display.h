@@ -6,6 +6,7 @@
 #include <font_ArialBold.h>
 #include <XPT2046_Touchscreen.h>
 #include <SPI.h>
+#include <Arduino.h>
 
 #define CS_PIN  8
 #define TFT_DC  9
@@ -125,6 +126,7 @@ extern DISPLAY_VAR DisplayParam;
 void DisplaySetup(uint8_t Rotation);
 void DisplaySetRotation(uint8_t Rotation);
 void DrawPopUp(char *Msg, uint16_t Delay);
+void DrawAlarmPopUp(char *Msg, uint16_t Delay);
 
 void DrawMainMenu();
 void DrawMeasurePage();
@@ -132,5 +134,6 @@ void DrawGraphicsPage();
 void DrawLogsPage();
 void DrawAlarmPage();
 void DrawSettingPage();
+void DrawResetPage();
 
 #endif

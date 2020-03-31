@@ -5,6 +5,7 @@
 #include "Time.h"
 #include "Settings.h"
 #include "EepromAnalyzer.h"
+#include "Alarms.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -64,6 +65,8 @@ typedef struct
 	double rescale;
 }RANGES;
 
+
+
 const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] = 
 {
 	{{&Current.actual, &Current.max	    , &Current.min, "A"   , DOUBLE 			 }, 
@@ -117,6 +120,14 @@ const RANGES RangeTab[RANGE_TAB_LENGHT] =
 	
 };
 
+
+const uint8_t AlarmIcon[] =
+{
+	0x0f, 0x00, 0x19, 0x80, 0x19, 0x80, 0x36, 0xc0, 
+	0x36, 0xc0, 0x36, 0xc0, 0x60, 0x60, 0x66, 0x60, 
+	0x66, 0x60, 0xc0, 0x30, 0xff, 0xf0, 0x3f, 0xc0, 
+};
+
 XPT2046_Touchscreen Touch(CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
@@ -136,6 +147,7 @@ const char *MenuVoices[MAX_MENU_ITEMS] =
 	"Log",
 	"Allarmi",
 	"Impostazioni",
+	"Reset",
 };
 
 const char *MeasureTitle[MAX_MEASURE_PAGES] = 
@@ -146,6 +158,24 @@ const char *MeasureTitle[MAX_MEASURE_PAGES] =
 	"Medie 2",
 	"Energie",
 	"Wake time",
+};
+
+const char *AlarmsTitle[MAX_ALARMS] = 
+{
+	"Sovra corrente",
+	"Sotto corrente",
+	"Sovra potenza att.",
+	"Sotto potenza att.",
+};
+
+const char *ResetsTitle[MAX_RESETS] = 
+{
+	"Reset default",
+	"Riavvio",
+	"Massimi/minimi",
+	"Medie",
+	"Energie",
+	"Log",
 };
 
 static uint8_t SearchRange(double Value2Search)
@@ -175,6 +205,7 @@ void DoTasks()
 	GetMeasure();	
 	if(TimeRefresh.hasPassed(1000, true))
 		Time.liveCnt++;
+	CheckAlarms();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -228,41 +259,6 @@ static void ClearDisplay(bool Inverse)
 		Display.fillScreen(ILI9341_BLACK);
 }
 
-void DrawPopUp(char *Msg, uint16_t Delay)
-{
-	uint32_t PopUpTimer = 0, PopUpTime = 0;
-	ClearDisplay(false);
-	Display.setTextColor(ILI9341_GREENYELLOW);
-	Display.setFont(Arial_28_Bold);	
-	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS);
-	Display.print(Msg);
-	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
-	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
-	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
-	PopUpTime = millis();
-	while(Delay > PopUpTimer)
-	{
-		DoTasks();
-		PopUpTimer = millis() - PopUpTime;
-	}
-	ClearDisplay(false);
-}
-
-void DisplaySetup(uint8_t Rotation)
-{
-	Display.begin();
-	ClearDisplay(false);
-	Touch.begin();
-	DisplaySetRotation(Rotation);
-	DisplayParam.displayRotation = Rotation;
-}
-
-
-static void ClearMenu()
-{
-	Display.fillRect(0, MENU_TITLE_POS + 32, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 30), ILI9341_BLACK);
-}
-
 static void DrawNavButtons(bool DrawBackButt)
 {
 	uint16_t Color = 0;
@@ -296,24 +292,6 @@ static void DrawNavButtons(bool DrawBackButt)
 						 NAV_BUTT_X_START + 25, NAV_BUTT_Y_START + (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE) + 35, ILI9341_WHITE);		
 	}
 
-}
-
-static void DrawTopInfo()
-{
-	String Info = "";
-	GetTime();
-	Display.fillRect(0, 0, DISPLAY_WIDTH, 20, ILI9341_BLACK);
-	Display.setTextColor(ILI9341_WHITE);
-	Display.setFont(Arial_12);
-	Display.setCursor(LEFT_ALIGN, TOP_POS);
-	Display.print(TimeStr.c_str());
-	Info += ("FW" + String(FW_VERSION, 1));
-	if(simulationMode)
-		Info += " DEMO";
-	Display.setCursor(CENTER_ALIGN(Info.c_str()), TOP_POS);
-	Display.print(Info.c_str());
-	Display.setCursor(RIGHT_ALIGN(DateStr.c_str()), TOP_POS);
-	Display.print(DateStr.c_str());
 }
 
 static uint8_t ButtonPressed()
@@ -360,6 +338,121 @@ static uint8_t ButtonPressed()
 	}
 	return KeyPress;
 }
+
+
+void DrawPopUp(char *Msg, uint16_t Delay)
+{
+	uint32_t PopUpTimer = 0, PopUpTime = 0;
+	ClearDisplay(false);
+	Display.setTextColor(ILI9341_GREENYELLOW);
+	Display.setFont(Arial_28_Bold);	
+	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS);
+	Display.print(Msg);
+	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
+	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
+	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
+	PopUpTime = millis();
+	while(Delay > PopUpTimer)
+	{
+		DoTasks();
+		PopUpTimer = millis() - PopUpTime;
+	}
+	ClearDisplay(false);
+}
+
+void DrawAlarmPopUp(char *Msg, uint16_t Delay)
+{
+	uint32_t PopUpTimer = 0, PopUpTime = 0;
+	ClearDisplay(false);
+	Display.setTextColor(ILI9341_GREENYELLOW);
+	Display.setFont(Arial_28_Bold);
+	Display.setCursor(CENTER_ALIGN("ALLARME"), CENTER_POS - 30);	
+	Display.print("ALLARME");
+	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS + 30);
+	Display.print(Msg);
+	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
+	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
+	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
+	PopUpTime = millis();
+	while(Delay > PopUpTimer)
+	{
+		GetMeasure();	
+		if(TimeRefresh.hasPassed(1000, true))
+			Time.liveCnt++;
+		PopUpTimer = millis() - PopUpTime;
+	}
+	ClearDisplay(false);
+}
+
+bool DrawAskPopUp(char *Msg)
+{
+	bool Confirm = false;
+	uint8_t KeyPress = MAX_KEY;
+	ClearDisplay(false);
+	DrawNavButtons(DRAW_OK);
+	Display.setTextColor(ILI9341_GREENYELLOW);
+	Display.setFont(Arial_28_Bold);	
+	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS);
+	Display.print(Msg);
+	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
+	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
+	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
+	while(1)
+	{
+		KeyPress = ButtonPressed();
+		DoTasks();
+		if(KeyPress == OK)
+		{
+			Confirm = true;
+			break;
+		}
+		else if(KeyPress == BACK)
+		{
+			Confirm = false;
+			break;			
+		}
+	}
+	ClearDisplay(false);
+	return Confirm;
+}
+
+void DisplaySetup(uint8_t Rotation)
+{
+	Display.begin();
+	ClearDisplay(false);
+	Touch.begin();
+	DisplaySetRotation(Rotation);
+	DisplayParam.displayRotation = Rotation;
+}
+
+
+static void ClearMenu()
+{
+	Display.fillRect(0, MENU_TITLE_POS + 32, DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2, DISPLAY_HIGH - (MENU_TITLE_POS + 30), ILI9341_BLACK);
+}
+
+
+
+static void DrawTopInfo()
+{
+	String Info = "";
+	GetTime();
+	Display.fillRect(0, 0, DISPLAY_WIDTH, 20, ILI9341_BLACK);
+	Display.setTextColor(ILI9341_WHITE);
+	Display.setFont(Arial_12);
+	Display.setCursor(LEFT_ALIGN, TOP_POS);
+	Display.print(TimeStr.c_str());
+	Info += ("FW" + String(FW_VERSION, 1));
+	if(simulationMode)
+		Info += " DEMO";
+	Display.setCursor(CENTER_ALIGN(Info.c_str()), TOP_POS);
+	Display.print(Info.c_str());
+	Display.setCursor(RIGHT_ALIGN(DateStr.c_str()), TOP_POS);
+	Display.print(DateStr.c_str());
+	if(AlarmPresence())
+		Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 3, TOP_POS, AlarmIcon, 12, 12, ILI9341_YELLOW);
+}
+
 
 void DrawMainMenu()
 {
@@ -756,6 +849,13 @@ static void DrawGraph()
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}
+	Display.setFont(Arial_12);
+	Display.drawFastHLine(GRAPHIC_X + GRAPHIC_W + 5, GRAPHIC_Y + 15, 10, ILI9341_RED);
+	Display.drawFastHLine(GRAPHIC_X + GRAPHIC_W + 5, GRAPHIC_Y + 35, 10, ILI9341_CYAN);
+	Display.setCursor(GRAPHIC_X + GRAPHIC_W + 18, GRAPHIC_Y + 10);
+	Display.print("I");
+	Display.setCursor(GRAPHIC_X + GRAPHIC_W + 18, GRAPHIC_Y + 30);
+	Display.print("V");
 }
 
 
@@ -870,60 +970,166 @@ void DrawLogsPage()
 	}
 }
 
-
-void DrawAlarmPage()
+static void ViewDetailAlarm(uint8_t AlarmIndex)
 {
-	bool ExitLogs = false;
-	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	bool ExitAlarmsView = false;
+	uint8_t KeyPress = MAX_KEY;
+	String AlarmTime = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_BACK);	
-	while(!ExitLogs)
+	while(!ExitAlarmsView)
 	{
+		DoTasks();
 		if(DisplayRefresh.hasPassed(500, true))
 		{
 			DrawTopInfo();
 			DrawNavButtons(DRAW_BACK);
 		}
+		Display.setFont(Arial_28_Bold);
+		if(TEXT_LENGHT(AlarmsTab[AlarmIndex].alarmName.c_str()) > DISPLAY_WIDTH)
+			Display.setFont(Arial_20_Bold);
 		Display.setFont(Arial_24_Bold);
-		Display.setTextColor(ILI9341_WHITE);
-		Display.setCursor(CENTER_ALIGN("Allarmi"), MENU_TITLE_POS);
-		Display.print("Allarmi");
-		
+		Display.setCursor(CENTER_ALIGN(AlarmsTab[AlarmIndex].alarmName.c_str()), MENU_TITLE_POS);
+		Display.print(AlarmsTab[AlarmIndex].alarmName.c_str());
+		Display.setFont(Arial_18);
+		if(AlarmsTab[AlarmIndex].isEnabled)
+		{
+			Display.setCursor(CENTER_ALIGN("Abilitato"), MENU_TITLE_POS + 65);
+			Display.print("Abilitato");	
+			if(AlarmsTab[AlarmIndex].isActive)
+			{
+				Display.setCursor(CENTER_ALIGN("ATTIVO"), MENU_TITLE_POS + 105);
+				Display.print("ATTIVO");
+				AlarmTime = (AlarmsTab[AlarmIndex].alarmHour < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmHour) : String(AlarmsTab[AlarmIndex].alarmHour));
+				AlarmTime += ":" + (AlarmsTab[AlarmIndex].alarmMinute < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmMinute) : String(AlarmsTab[AlarmIndex].alarmMinute));
+				AlarmTime += "  " + (AlarmsTab[AlarmIndex].alarmDay < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmDay) : String(AlarmsTab[AlarmIndex].alarmDay));
+				AlarmTime += "/" + (AlarmsTab[AlarmIndex].alarmMonth < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmMonth) : String(AlarmsTab[AlarmIndex].alarmMonth));
+				AlarmTime += "/" + (AlarmsTab[AlarmIndex].alarmYear < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmYear) : String(AlarmsTab[AlarmIndex].alarmYear));
+
+				// AlarmTime = String(AlarmsTab[AlarmIndex].alarmHour) + ":" + String(AlarmsTab[AlarmIndex].alarmMinute);
+				// AlarmTime +=  " " + String(AlarmsTab[AlarmIndex].alarmDay) + "/" + String(AlarmsTab[AlarmIndex].alarmMonth) + "/" + String(AlarmsTab[AlarmIndex].alarmYear);
+				Display.setCursor(CENTER_ALIGN(AlarmTime.c_str()), MENU_TITLE_POS + 135);
+				Display.print(AlarmTime.c_str());	
+			}
+			else
+			{
+				Display.setCursor(CENTER_ALIGN(" NON ATTIVO"), MENU_TITLE_POS + 105);
+				Display.print("NON ATTIVO");					
+			}
+		}
+		else
+		{
+			Display.setCursor(CENTER_ALIGN("Non abilitato"), MENU_TITLE_POS + 65);
+			Display.print("Non abilitato");			
+		}
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
 			case UP:	
-				if(Item > 0)
-					Item--;
-				else
-					Item = MAX_MENU_ITEMS - 1;
 				break;
-			case DOWN:
-				if(Item < MAX_MENU_ITEMS - 1)
-					Item++;
-				else
-					Item = 0;			
+			case DOWN:		
 				break;
 			case OK:	
-				DBG("Ok premuto");
 				break;
 			case BACK:
-				AnalyzerPage = MAIN_MENU;
-				ExitLogs = true;
-				DBG("Back premuto");
+				ExitAlarmsView = true;
+				ClearDisplay(false);
 				break;
 			default:
 				break;
 		}
 	
-		if(OldItem != Item)
+	}	
+}
+
+void DrawAlarmPage()
+{
+	bool ExitAlarms = false;
+	uint8_t TopItem = 0, AlarmItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);	
+	while(!ExitAlarms)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(AlarmItem + 1) + "/" + String(MAX_ALARMS);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN("Allarmi"), MENU_TITLE_POS);
+		Display.print("Allarmi");
+		Display.setFont(Arial_18);
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+		{
+			int NewItem = TopItem + i;
+			if(NewItem >= MAX_ALARMS)
+				break;
+			if(NewItem == AlarmItem)
+			{
+				Display.setTextColor(ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(AlarmsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(AlarmsTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(AlarmsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(AlarmsTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(AlarmsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(AlarmsTitle[NewItem]), ILI9341_GREENYELLOW);
+			}
+			else
+			{
+				Display.setTextColor(ILI9341_WHITE);
+			}
+			Display.setCursor(CENTER_ALIGN(AlarmsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(AlarmsTitle[NewItem]);
+		}
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(AlarmItem > 0)
+					AlarmItem--;
+				else
+					AlarmItem = MAX_ALARMS - 1;
+				break;
+			case DOWN:
+				if(AlarmItem < MAX_ALARMS - 1)
+					AlarmItem++;
+				else
+					AlarmItem = 0;			
+				break;
+			case OK:	
+				ViewDetailAlarm(AlarmItem);
+				ClearDisplay(false);
+				break;
+			case BACK:
+				AnalyzerPage = MAIN_MENU;
+				break;
+			default:
+				break;
+		}
+	
+		if(OldItem != AlarmItem)
 		{
 			ClearMenu();
-			DBG("OldItem = " + String(OldItem) + " Item = " + String(Item));
-			OldItem = Item;
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 14, MENU_TITLE_POS + 8, 50, 16, ILI9341_BLACK);
+			OldItem = AlarmItem;
 		}	
+		if(AlarmItem > MAX_MENU_VIEW_ITEMS - 1)
+		{
+			TopItem = AlarmItem - (MAX_MENU_VIEW_ITEMS - 1);
+		}
+		else
+			TopItem = 0;
 	}
 }
 
@@ -1223,6 +1429,8 @@ static void ChangeValue(uint8_t SettingIndex)
 						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
 						WriteSetting(SettingIndex, NewValue);
 						DrawPopUp("Valore salvato", 1000);
+						for(int i = 0; i < MAX_SETTINGS; i++)
+							DBG(SettingsVals[i]);
 					}
 					else
 						DrawPopUp("Valore errato", 1000);
@@ -1265,6 +1473,8 @@ static void ChangeEnum(uint8_t SettingIndex)
 		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
 		Display.print(Settings[SettingIndex].settingName);
 		Display.setFont(Arial_28_Bold);
+		if(TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) > DISPLAY_WIDTH)
+			Display.setFont(Arial_20_Bold);
 		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName), CENTER_POS);
 		Display.print(Settings[SettingIndex].enumPtr[EnumItem].enumName);
 		Display.drawRoundRect(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName)), 
@@ -1424,5 +1634,121 @@ void DrawSettingPage()
 			}
 			ClearDisplay(false);
 		}
+	}
+}
+
+void DrawResetPage()
+{
+	bool ExitSetting = false, ConfirmReset = false;
+	uint8_t TopItem = 0, ResetItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);
+	while(!ExitSetting)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(ResetItem + 1) + "/" + String(MAX_RESETS);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN("Reset"), MENU_TITLE_POS);
+		Display.print("Reset");
+		Display.setFont(Arial_18);
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+		{
+			int NewItem = TopItem + i;
+			if(NewItem >= MAX_RESETS)
+				break;
+			if(NewItem == ResetItem)
+			{
+				Display.setTextColor(ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ResetsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(ResetsTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ResetsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(ResetsTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ResetsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(ResetsTitle[NewItem]), ILI9341_GREENYELLOW);
+			}
+			else
+			{
+				Display.setTextColor(ILI9341_WHITE);
+			}
+			Display.setCursor(CENTER_ALIGN(ResetsTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(ResetsTitle[NewItem]);
+		}
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(ResetItem > 0)
+					ResetItem--;
+				else
+					ResetItem = MAX_RESETS - 1;
+				break;
+			case DOWN:
+				if(ResetItem < MAX_RESETS - 1)
+					ResetItem++;
+				else
+					ResetItem = 0;			
+				break;
+			case OK:
+				ConfirmReset = DrawAskPopUp("Confermare");			
+				switch(ResetItem)
+				{
+					case RESET_DFLT:
+						WriteResetDeflt();
+						delay(10);
+						CPU_RESTART;
+					case RESTART:
+						delay(10);
+						CPU_RESTART;
+						break;
+					case RESET_MAX_MIN:
+						if(ConfirmReset)
+							ResetMaxMin();
+						break;
+					case RESET_AVG:
+						if(ConfirmReset)
+							ResetAvg();					
+						break;
+					case RESET_ENERGIES:
+						if(ConfirmReset)
+							ResetEnergies();					
+						break;
+					case RESET_LOG:
+						break;
+					default:
+						break;
+				}
+				break;
+			case BACK:
+				AnalyzerPage = MAIN_MENU;
+				ExitSetting = true;
+				break;
+			default:
+				break;
+		}
+	
+		if(OldItem != ResetItem)
+		{
+			ClearMenu();
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 14, MENU_TITLE_POS + 8, 50, 16, ILI9341_BLACK);
+			OldItem = ResetItem;
+		}	
+		if(ResetItem > MAX_MENU_VIEW_ITEMS - 1)
+		{
+			TopItem = ResetItem - (MAX_MENU_VIEW_ITEMS - 1);
+		}
+		else
+			TopItem = 0;
 	}
 }

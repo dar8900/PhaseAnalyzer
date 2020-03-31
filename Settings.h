@@ -49,9 +49,10 @@ typedef enum
 	ENABLE_OVER_PATT_POWER,           // 10
 	UNDER_ATT_POWER_VALUE,            // 11
 	ENABLE_UNDER_PATT_POWER,          // 12
-	AVG_TIME,                         // 13
-	SIMULATION_MODE,                  // 14
-	MAX_SETTINGS                      // 15
+	ALARM_INSERT_DELAY,				  // 13
+	AVG_TIME,                         // 14
+	SIMULATION_MODE,                  // 15
+	MAX_SETTINGS                      // 16
 }SETTINGS_LIST;
 
 typedef enum

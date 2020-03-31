@@ -4,7 +4,9 @@
 #include "Time.h"
 #include "EepromAnalyzer.h"
 
-uint8_t AnalyzerPage = SETTINGS;
+
+
+uint8_t AnalyzerPage = MAIN_MENU;
 
 void setup()
 {
@@ -36,6 +38,9 @@ void loop()
 			break;
 		case SETTINGS:
 			DrawSettingPage();
+			break;
+		case RESETS:
+			DrawResetPage();
 			break;
 		default:
 			break;

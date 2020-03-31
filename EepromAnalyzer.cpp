@@ -10,6 +10,10 @@
 #define SETTINGS_START_ADDR	      0
 #define SETTINGS_CHECKSUM_ADDR	513  // +4 bytes -> 517
 
+#define ENERGIES_ADDR			520 // +24 bytes -> 544
+
+#define RESET_DFLT_ADDR			550 // +1 bytes -> 551
+
 #define LOGS_START_ADDR		   1024
 #define LOGS_CHECKSUM_ADDR	   1018 // +4 bytes -> 1022
 
@@ -38,7 +42,11 @@ bool InitMemory()
 		ReadAllSettings();
 	}
 	else
+	{
+		if(ReadResetDflt())
+			SettingToDefault();
 		ReadAllSettings();
+	}
 	return isEmpty;
 }
 
@@ -104,5 +112,42 @@ void ReadAllSettings()
 	}	
 	EEPROM.get(SETTINGS_CHECKSUM_ADDR, CheckSumSaved);
 	if(CheckSumReaded != CheckSumSaved)
+	{
 		SettingToDefault();
+		ReadAllSettings();
+	}
+	for(int settingIndex = 0; settingIndex < MAX_SETTINGS; settingIndex++)
+	{
+		if(Settings[settingIndex].type == ENUM_TYPE)
+		{
+			switch(Settings[settingIndex].enumPtr[0].enumType)
+			{
+				case BOOLEAN_TYPE:
+					*(bool *)Settings[settingIndex].enumPtr[0].enumValuePtr = (bool)SettingsVals[settingIndex];
+					break;
+				case LOG_MEASURE_TYPE:
+				default:
+					break;
+			}
+		}
+	}
+}
+
+
+void WriteResetDeflt()
+{
+	EEPROM.write(RESET_DFLT_ADDR, 1);
+}
+
+bool ReadResetDflt()
+{
+	bool isReset = false;
+	if(EEPROM.read(RESET_DFLT_ADDR) == 1)
+	{
+		isReset = true;
+		EEPROM.write(RESET_DFLT_ADDR, 0);
+	}
+	else
+		isReset = false;
+	return isReset;
 }

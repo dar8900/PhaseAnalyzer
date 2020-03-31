@@ -3,6 +3,7 @@
 #include <ADC.h>
 #include <ADC_util.h>
 #include "Settings.h"
+#include "EepromAnalyzer.h"
 
 #define CURRENT_PIN	A9
 #define VOLTAGE_PIN	A2
@@ -256,4 +257,43 @@ void GetMeasure()
 	CalcMaxAvg(&PRea);
 	CalcMaxAvg(&PApp);
 	CalcEnergy();
+}
+
+void ResetMaxMin()
+{
+	Current.min = 0.0;
+	Voltage.min = 0.0;
+	PAtt.min = 0.0;
+	PRea.min = 0.0;
+	PApp.min = 0.0;
+	Pf.min = 0.0;
+	Current.max = 0.0;
+	Voltage.max = 0.0;
+	PAtt.max = 0.0;
+	PRea.max = 0.0;
+	PApp.max = 0.0;
+	Pf.max = 0.0;
+}
+
+void ResetAvg()
+{
+	Current.avg = 0.0;
+	Voltage.avg = 0.0;
+	PAtt.avg = 0.0;
+	PRea.avg = 0.0;
+	PApp.avg = 0.0;
+	Pf.avg = 0.0;	
+	Current.maxAvg = 0.0;
+	Voltage.maxAvg = 0.0;
+	PAtt.maxAvg = 0.0;
+	PRea.maxAvg = 0.0;
+	PApp.maxAvg = 0.0;
+	Pf.maxAvg = 0.0;
+}
+
+void ResetEnergies()
+{
+	EnAtt.actual = 0.0;
+	EnRea.actual = 0.0;
+	EnApp.actual = 0.0;
 }
