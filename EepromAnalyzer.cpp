@@ -4,13 +4,13 @@
 #include <EEPROM.h>
 #include "Display.h"
 
-#define MAX_SETTINGS_MEMORY 	512
+#define MAX_SETTINGS_MEMORY 	256	 // Max 64 settaggi
 #define MAX_LOGS_MEMORY		   1024
 
 #define SETTINGS_START_ADDR	      0
 #define SETTINGS_CHECKSUM_ADDR	513  // +4 bytes -> 517
 
-#define ENERGIES_ADDR			520 // +24 bytes -> 544
+#define ENERGIES_ADDR			260 // +24 bytes -> 284
 
 #define RESET_DFLT_ADDR			550 // +1 bytes -> 551
 
@@ -65,9 +65,9 @@ void WriteSetting(uint8_t SettingsIndex, int32_t NewVal)
 	for(int i = 0; i < MAX_SETTINGS; i++)
 	{
 		if(i != SettingsIndex)
-			CheckSum += SettingsVals[i];
+			CheckSum += (uint32_t)SettingsVals[i];
 		else
-			CheckSum += NewVal;
+			CheckSum += (uint32_t)NewVal;
 	}
 	EEPROM.put(SETTINGS_CHECKSUM_ADDR, CheckSum);
 }
@@ -89,12 +89,12 @@ void WriteAllSettings(bool toDflt)
 			if(!toDflt)
 			{
 				EEPROM.put(i * sizeof(int32_t), SettingsVals[i]);
-				CheckSum += SettingsVals[i];
+				CheckSum += (uint32_t)SettingsVals[i];
 			}
 			else
 			{
 				EEPROM.put(i * sizeof(int32_t), SettingsDefVal[i]);
-				CheckSum += SettingsDefVal[i];				
+				CheckSum += (uint32_t)SettingsDefVal[i];				
 			}		
 		}
 		delay(1);

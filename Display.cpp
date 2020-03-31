@@ -1113,6 +1113,7 @@ void DrawAlarmPage()
 				break;
 			case BACK:
 				AnalyzerPage = MAIN_MENU;
+				ExitAlarms = true;
 				break;
 			default:
 				break;
