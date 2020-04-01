@@ -23,7 +23,7 @@
 
 #define MIN_TO_SEC(min)			(min * 60)
 
-#define FW_VERSION	0.1
+#define FW_VERSION	0.2
 
 typedef enum
 {
@@ -34,6 +34,8 @@ typedef enum
 	ALARMS,
 	SETTINGS,
 	RESETS,
+	LIST_LOG,
+	GRAPHIC_LOG,
 	MAX_ANALYZER_PAGES
 }ANALYZER_PAGES;
 

@@ -11,6 +11,7 @@ LOGS_DEF LogBuffer[MAX_LOGS];
 uint16_t LastLogIndex;
 uint8_t MeasureToLog;
 bool EnableLog;
+bool LogFull;
 Chrono LogTimer(Chrono::SECONDS);
 
 
@@ -32,7 +33,11 @@ static void WriteSingleLog()
 	// EEPROM.put((LastLogIndex * LOG_SIZE) + LOGS_START_ADDR, LogBuffer[LastLogIndex]);
 	LastLogIndex++;
 	if(LastLogIndex >= MAX_LOGS)
+	{
 		LastLogIndex = 0;
+		LogFull = true;
+		// EEPROM.update(LOG_FULL_ADDR, 1);
+	}
 	// EEPROM.put(LAST_LOG_ADDR, LastLogIndex);
 }
 
@@ -43,6 +48,7 @@ void ReadAllLogs()
 	{
 		EEPROM.get((LogIndex * LOG_SIZE) + LOGS_START_ADDR, LogBuffer[LogIndex]);
 	}
+	LogFull = (bool)EEPROM.read(LOG_FULL_ADDR);
 }
 
 void ResetLogs()
@@ -54,6 +60,8 @@ void ResetLogs()
 	{
 		EEPROM.put((LogIndex * LOG_SIZE) + LOGS_START_ADDR, DeleteValue);
 	}
+	LogFull = false;
+	EEPROM.update(LOG_FULL_ADDR, 0);
 	ReadAllLogs();
 }
 
@@ -64,12 +72,12 @@ void LogMeasure()
 		if(LogTimer.hasPassed(SettingsVals[SET_LOG_TIME], true))
 		{
 			WriteSingleLog();
-			for(int i = 0; i < MAX_LOGS; i++)
-			{
-				DBG("Misura log " + String(i) + ": " + String(LogBuffer[i].logMeasure, 3) + " Timestamp: " + String(LogBuffer[i].timeStamp));
-			}
-			DBG("Log index: " + String(LastLogIndex));
-			DBG("STOP");
+			// for(int i = 0; i < MAX_LOGS; i++)
+			// {
+				// DBG("Misura log " + String(i) + ": " + String(LogBuffer[i].logMeasure, 3) + " Timestamp: " + String(LogBuffer[i].timeStamp));
+			// }
+			// DBG("Log index: " + String(LastLogIndex));
+			// DBG("STOP");
 		}
 	}
 	else

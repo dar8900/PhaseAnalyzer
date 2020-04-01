@@ -131,9 +131,9 @@ const uint8_t AlarmIcon[] =
 
 const uint8_t LogIcon[] =
 {
-	0x07, 0xf0, 0x1c, 0x10, 0x33, 0xd0, 0x60, 0x50, 
-	0xc0, 0x10, 0x83, 0xd0, 0xfb, 0xd0, 0x80, 0x10, 
-	0x81, 0xd0, 0xfa, 0x50, 0x80, 0x90, 0xff, 0xf0, 
+	0x0f, 0xf0, 0x12, 0x50, 0x12, 0x50, 0x62, 0x50, 
+	0x42, 0x50, 0x80, 0x10, 0xa6, 0xd0, 0xa6, 0x90, 
+	0xa6, 0xb0, 0xb6, 0xd0, 0x80, 0x10, 0xff, 0xf0, 
 };
 
 XPT2046_Touchscreen Touch(CS_PIN);
@@ -168,6 +168,13 @@ const char *MeasureTitle[MAX_MEASURE_PAGES] =
 	"Energie",
 	"Wake time",
 };
+
+const char *LogTitle[MAX_LOGS_PAGES] = 
+{
+	"Lista dei log",
+	"Grafico dei log",
+};
+
 
 const char *AlarmsTitle[MAX_ALARMS] = 
 {
@@ -979,20 +986,18 @@ static void FillLogList()
 		}
 		else
 		{
-			LogList[i] = "";
+			if(!LogFull)
+				LogList[i] = "";
 		}
 	}
 }
 
-static void ViewDetailLog(uint8_t LogItem)
-{
-	
-}
 
-void DrawLogsPage()
+void DrawLogsList()
 {
 	bool ExitLogs = false, RefreshNumPage = false;
 	uint8_t TopItem = 0, LogItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	uint8_t MaxList = 0;
 	String NumPage = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
@@ -1002,6 +1007,10 @@ void DrawLogsPage()
 	{
 		while(!ExitLogs)
 		{
+			if(!LogFull)
+				MaxList = LastLogIndex;
+			else
+				MaxList = MAX_LOGS;
 			DoTasks();
 			FillLogList();
 			if(DisplayRefresh.hasPassed(500, true))
@@ -1013,17 +1022,17 @@ void DrawLogsPage()
 			}
 			Display.setTextColor(ILI9341_WHITE);
 			Display.setFont(Arial_12);
-			NumPage = String(LogItem + 1) + "/" + String(LastLogIndex);
+			NumPage = String(LogItem + 1) + "/" + String(MaxList);
 			Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
 			Display.print(NumPage.c_str());
 			Display.setFont(Arial_24_Bold);
-			Display.setCursor(CENTER_ALIGN("Log"), MENU_TITLE_POS);
-			Display.print("Log");
+			Display.setCursor(CENTER_ALIGN("Lista log"), MENU_TITLE_POS);
+			Display.print("Lista log");
 			Display.setFont(Arial_13);
 			for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
 			{
 				int NewItem = TopItem + i;
-				if(NewItem >= LastLogIndex)
+				if(NewItem >= MaxList)
 					break;
 				if(NewItem == LogItem)
 				{
@@ -1049,20 +1058,18 @@ void DrawLogsPage()
 					if(LogItem > 0)
 						LogItem--;
 					else
-						LogItem = LastLogIndex - 1;
+						LogItem = MaxList - 1;
 					break;
 				case DOWN:
-					if(LogItem < LastLogIndex - 1)
+					if(LogItem < MaxList - 1)
 						LogItem++;
 					else
 						LogItem = 0;			
 					break;
 				case OK:	
-					// ViewDetailLog(LogItem);
-					ClearDisplay(false);
 					break;
 				case BACK:
-					AnalyzerPage = MAIN_MENU;
+					AnalyzerPage = LOGS;
 					ExitLogs = true;
 					break;
 				default:
@@ -1094,6 +1101,100 @@ void DrawLogsPage()
 		AnalyzerPage = MAIN_MENU;
 		DrawPopUp("Nessun log", 2000);
 	}
+}
+
+void DrawLogMenu()
+{
+	bool ExitLogMenu = false;
+	uint8_t TopItem = 0, LogMenuItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);	
+	while(!ExitLogMenu)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(LogMenuItem + 1) + "/" + String(MAX_LOGS_PAGES);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN("Log menu"), MENU_TITLE_POS);
+		Display.print("Log menu");
+		Display.setFont(Arial_18);
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+		{
+			int NewItem = TopItem + i;
+			if(NewItem >= MAX_LOGS_PAGES)
+				break;
+			if(NewItem == LogMenuItem)
+			{
+				Display.setTextColor(ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(LogTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(LogTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(LogTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(LogTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(LogTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(LogTitle[NewItem]), ILI9341_GREENYELLOW);
+			}
+			else
+			{
+				Display.setTextColor(ILI9341_WHITE);
+			}
+			Display.setCursor(CENTER_ALIGN(LogTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(LogTitle[NewItem]);
+		}
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(LogMenuItem > 0)
+					LogMenuItem--;
+				else
+					LogMenuItem = MAX_LOGS_PAGES - 1;
+				break;
+			case DOWN:
+				if(LogMenuItem < MAX_LOGS_PAGES - 1)
+					LogMenuItem++;
+				else
+					LogMenuItem = 0;			
+				break;
+			case OK:	
+				if(LogMenuItem == LOG_LIST)
+					AnalyzerPage = LIST_LOG;
+				else
+					AnalyzerPage = GRAPHIC_LOG;
+				ExitLogMenu = true;
+				ClearDisplay(false);
+				break;
+			case BACK:
+				AnalyzerPage = MAIN_MENU;
+				ExitLogMenu = true;
+				break;
+			default:
+				break;
+		}
+	
+		if(OldItem != LogMenuItem)
+		{
+			ClearMenu();
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 14, MENU_TITLE_POS + 8, 50, 16, ILI9341_BLACK);
+			OldItem = LogMenuItem;
+		}	
+		if(LogMenuItem > MAX_MENU_VIEW_ITEMS - 1)
+		{
+			TopItem = LogMenuItem - (MAX_MENU_VIEW_ITEMS - 1);
+		}
+		else
+			TopItem = 0;
+	}	
 }
 
 static void ViewDetailAlarm(uint8_t AlarmIndex)

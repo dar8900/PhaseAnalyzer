@@ -6,6 +6,7 @@
 #define MAX_LOGS_MEMORY		   1024
 #define LOGS_START_ADDR		   1000  // +1024 bytes = 128 log -> 2024
 #define LAST_LOG_ADDR		   2030  // + 2 bytes -> 2032
+#define LOG_FULL_ADDR		   2033  // + 1 bytes -> 2034
 
 #define LOG_SIZE				  8
 
@@ -34,6 +35,7 @@ extern LOGS_DEF LogBuffer[];
 extern uint16_t LastLogIndex;
 extern uint8_t MeasureToLog;
 extern bool EnableLog;
+extern bool LogFull;
 extern const double *Measures4Log[];
 
 void LogMeasure();

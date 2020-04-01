@@ -4,8 +4,6 @@
 #include "Display.h"
 
 #define MAX_SETTINGS_MEMORY 	256	 // Max 64 settaggi
-#define MAX_LOGS_MEMORY		   1024
-
 #define SETTINGS_START_ADDR	      0
 #define SETTINGS_CHECKSUM_ADDR	513  // +4 bytes -> 517
 

@@ -31,7 +31,7 @@ void loop()
 			DrawGraphicsPage();
 			break;
 		case LOGS:
-			DrawLogsPage();
+			DrawLogMenu();
 			break;
 		case ALARMS:
 			DrawAlarmPage();
@@ -42,6 +42,12 @@ void loop()
 		case RESETS:
 			DrawResetPage();
 			break;
+		case LIST_LOG:
+			DrawLogsList();
+			break;
+		case GRAPHIC_LOG:
+			DrawLogsList();
+			break;		
 		default:
 			break;
 	}
