@@ -3,6 +3,7 @@
 #include "Measures.h"
 #include "Time.h"
 #include "EepromAnalyzer.h"
+#include "Rele.h"
 
 
 
@@ -15,6 +16,7 @@ void setup()
 	AnalogInit();
 	RtcInit();
 	InitMemory();
+	SwitchInit();
 }
 
 void loop()
@@ -46,8 +48,11 @@ void loop()
 			DrawLogsList();
 			break;
 		case GRAPHIC_LOG:
-			DrawLogsList();
-			break;		
+			DrawLogGraphic();
+			break;	
+		case RELE:
+			DrawRelePage();
+			break;
 		default:
 			break;
 	}

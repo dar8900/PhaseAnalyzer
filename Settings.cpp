@@ -3,6 +3,7 @@
 #include "Measures.h"
 #include "Alarms.h"
 #include "Logs.h"
+#include "Rele.h"
 
 int32_t SettingsVals[MAX_SETTINGS];
 
@@ -74,6 +75,13 @@ const ENUM_VAL SimulationEnabledEnum[2] =
 	{&simulationMode, "Abilitato"      , BOOLEAN_TYPE},
 };
 
+
+const ENUM_VAL AlarmSwitchdEnum[3] = 
+{
+	{&Switch.associatedAlarm, "Sovra corrente"   		, BOOLEAN_TYPE},
+	{&Switch.associatedAlarm, "Sovra potenza att."      , BOOLEAN_TYPE},
+	{&Switch.associatedAlarm, "Nessuno"   		 		, BOOLEAN_TYPE},
+};
 
 const SETTING_DEF Settings[MAX_SETTINGS] = 
 {

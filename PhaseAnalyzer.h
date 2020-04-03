@@ -23,7 +23,7 @@
 
 #define MIN_TO_SEC(min)			(min * 60)
 
-#define FW_VERSION	0.2
+#define FW_VERSION	0.3
 
 typedef enum
 {
@@ -32,6 +32,7 @@ typedef enum
 	GRAPHICS,
 	LOGS,
 	ALARMS,
+	RELE,
 	SETTINGS,
 	RESETS,
 	LIST_LOG,
@@ -45,6 +46,7 @@ typedef enum
 	GRAPHICS_ITEM,
 	LOGS_ITEM,
 	ALARM_ITEM,
+	RELE_STATUS,
 	SETTINGS_ITEM,
 	RESET_ITEM,
 	MAX_MENU_ITEMS
@@ -84,6 +86,15 @@ typedef enum
 	MAX_ALARMS
 }ALARMS_PAGES;
 
+
+typedef enum
+{
+	STATUS = 0,
+	SET_ALARM,
+	SET_TIMER,
+	STATISTICS,
+	MAX_RELE_ITEM
+}RELE_PAGES;
 
 typedef enum
 {

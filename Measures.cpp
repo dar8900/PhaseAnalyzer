@@ -97,9 +97,9 @@ void AnalogInit()
 	
 	Current.min = 16.0;
 	Voltage.min = 230.0;
-	PAtt.min = 3.680;
-	PRea.min = 3.680;
-	PApp.min = 3.680;
+	PAtt.min = 3680.0;
+	PRea.min = 3680.0;
+	PApp.min = 3680.0;
 	Pf.min = 1.000;
 	
 }
@@ -109,7 +109,7 @@ static void CalcMaxMin(MEASURES_VAR *Measure)
 {
 	if(Measure->max < Measure->actual)
 		Measure->max = Measure->actual;
-	if(Measure->min > Measure->actual)
+	if(Measure->min > Measure->actual || (int32_t)Measure->min == 0)
 		Measure->min = Measure->actual;
 }
 

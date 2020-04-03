@@ -45,6 +45,9 @@ typedef enum
 	MAX_SETTINGS                      // 16
 }SETTINGS_LIST;
 
+
+
+
 typedef enum
 {
 	VALUE_TYPE = 0,
@@ -67,5 +70,6 @@ typedef struct
 extern int32_t SettingsVals[];
 extern const int32_t SettingsDefVal[];
 extern const SETTING_DEF Settings[];
+extern const ENUM_VAL AlarmSwitchdEnum[];
 
 #endif

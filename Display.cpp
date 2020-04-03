@@ -7,6 +7,7 @@
 #include "EepromAnalyzer.h"
 #include "Alarms.h"
 #include "Logs.h"
+#include "Rele.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -136,7 +137,14 @@ const uint8_t LogIcon[] =
 	0xa6, 0xb0, 0xb6, 0xd0, 0x80, 0x10, 0xff, 0xf0, 
 };
 
-XPT2046_Touchscreen Touch(CS_PIN);
+const uint8_t ReleTimerIcon[] =
+{
+	0x3f, 0x80, 0x60, 0xc0, 0x80, 0x20, 0x84, 0x20, 
+	0x84, 0x20, 0x87, 0xa0, 0x80, 0x20, 0x80, 0x20, 
+	0xc0, 0x60, 0x60, 0xc0, 0x1f, 0x00, 0x00, 0x00, 
+};
+
+XPT2046_Touchscreen Touch(TOUCH_CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
@@ -155,6 +163,7 @@ const char *MenuVoices[MAX_MENU_ITEMS] =
 	"Grafici",
 	"Log",
 	"Allarmi",
+	"Presa",
 	"Impostazioni",
 	"Reset",
 };
@@ -183,6 +192,15 @@ const char *AlarmsTitle[MAX_ALARMS] =
 	"Sovra potenza att.",
 	"Sotto potenza att.",
 };
+
+const char *ReleTitle[MAX_RELE_ITEM] = 
+{
+	"Stato presa",
+	"Imposta allarme",
+	"Imposta timer",
+	"Statistiche",
+};
+
 
 const char *ResetsTitle[MAX_RESETS] = 
 {
@@ -223,6 +241,7 @@ void DoTasks()
 		Time.liveCnt++;
 	CheckAlarms();
 	LogMeasure();
+	RefreshSwitchStatus();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -363,6 +382,8 @@ void DrawPopUp(char *Msg, uint16_t Delay)
 	ClearDisplay(false);
 	Display.setTextColor(ILI9341_GREENYELLOW);
 	Display.setFont(Arial_28_Bold);	
+	if(TEXT_LENGHT(Msg) > DISPLAY_WIDTH)
+		Display.setFont(Arial_20_Bold);	
 	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS);
 	Display.print(Msg);
 	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
@@ -377,12 +398,45 @@ void DrawPopUp(char *Msg, uint16_t Delay)
 	ClearDisplay(false);
 }
 
+void DrawInfoPopUp(char *Msg, uint16_t Delay)
+{
+	uint32_t PopUpTimer = 0, PopUpTime = 0;
+	ClearDisplay(false);
+	Display.setTextColor(ILI9341_GREENYELLOW);
+	Display.setFont(Arial_28_Bold);
+	if(TEXT_LENGHT(Msg) > DISPLAY_WIDTH)
+		Display.setFont(Arial_20_Bold);		
+	Display.setCursor(CENTER_ALIGN("INFO"), CENTER_POS - 30);	
+	Display.print("INFO");
+	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS + 30);
+	Display.print(Msg);
+	Display.drawRoundRect(0, 0, DISPLAY_WIDTH, DISPLAY_HIGH, 2, ILI9341_WHITE);
+	Display.drawRoundRect(1, 1, DISPLAY_WIDTH - 2, DISPLAY_HIGH - 2, 2, ILI9341_WHITE);
+	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
+	PopUpTime = millis();
+	while(Delay > PopUpTimer)
+	{
+		GetMeasure();	
+		if(TimeRefresh.hasPassed(1000, true))
+			Time.liveCnt++;
+		CheckAlarms();
+		LogMeasure();
+		if(TimeRefresh.hasPassed(1000, true))
+			Time.liveCnt++;
+		PopUpTimer = millis() - PopUpTime;
+	}
+	ClearDisplay(false);
+}
+
+
 void DrawAlarmPopUp(char *Msg, uint16_t Delay)
 {
 	uint32_t PopUpTimer = 0, PopUpTime = 0;
 	ClearDisplay(false);
 	Display.setTextColor(ILI9341_GREENYELLOW);
 	Display.setFont(Arial_28_Bold);
+	if(TEXT_LENGHT(Msg) > DISPLAY_WIDTH)
+		Display.setFont(Arial_20_Bold);		
 	Display.setCursor(CENTER_ALIGN("ALLARME"), CENTER_POS - 30);	
 	Display.print("ALLARME");
 	Display.setCursor(CENTER_ALIGN(Msg), CENTER_POS + 30);
@@ -393,7 +447,8 @@ void DrawAlarmPopUp(char *Msg, uint16_t Delay)
 	PopUpTime = millis();
 	while(Delay > PopUpTimer)
 	{
-		GetMeasure();	
+		GetMeasure();
+		RefreshSwitchStatus();
 		if(TimeRefresh.hasPassed(1000, true))
 			Time.liveCnt++;
 		PopUpTimer = millis() - PopUpTime;
@@ -481,6 +536,10 @@ static void DrawTopInfo()
 	{
 		LogInconTimer.restart();
 		LogInconToggle = false;
+	}
+	if(Switch.haveTimer)
+	{
+		Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 33, TOP_POS, ReleTimerIcon, 12, 12, ILI9341_CYAN);
 	}
 }
 
@@ -893,7 +952,7 @@ static void DrawGraph()
 void DrawGraphicsPage()
 {
 	bool ExitGraphics = false;
-	uint8_t TopItem = 0, Item = 0, OldItem = 0, KeyPress = MAX_KEY;
+	uint8_t KeyPress = MAX_KEY;
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
@@ -916,16 +975,8 @@ void DrawGraphicsPage()
 		switch(KeyPress)
 		{
 			case UP:	
-				if(Item > 0)
-					Item--;
-				else
-					Item = MAX_MENU_ITEMS - 1;
 				break;
-			case DOWN:
-				if(Item < MAX_MENU_ITEMS - 1)
-					Item++;
-				else
-					Item = 0;			
+			case DOWN:		
 				break;
 			case OK:	
 				break;
@@ -937,11 +988,11 @@ void DrawGraphicsPage()
 				break;
 		}
 	
-		if(OldItem != Item)
-		{
-			ClearMenu();
-			OldItem = Item;
-		}
+		// if(OldItem != Item)
+		// {
+			// ClearMenu();
+			// OldItem = Item;
+		// }
 	}		
 }
 
@@ -1098,10 +1149,114 @@ void DrawLogsList()
 	}
 	else
 	{
-		AnalyzerPage = MAIN_MENU;
+		AnalyzerPage = LOGS;
 		DrawPopUp("Nessun log", 2000);
 	}
 }
+
+static void DrawGraphLog(LOGS_DEF *LogBufferLocal)
+{
+	int32_t y = 0, y_old = 0, MaxVal = 0;
+	int LogBufferIndex = 0;
+	Display.drawRoundRect(LOG_GRAPHIC_X, LOG_GRAPHIC_Y, LOG_GRAPHIC_W, LOG_GRAPHIC_H, 1, ILI9341_WHITE);
+	Display.drawFastVLine(LOG_GRAPHIC_X + (LOG_GRAPHIC_W / 2), LOG_GRAPHIC_Y, LOG_GRAPHIC_H, ILI9341_DARKGREY);
+	Display.drawFastHLine(LOG_GRAPHIC_X , LOG_GRAPHIC_HALF, LOG_GRAPHIC_W, ILI9341_DARKGREY);
+
+	for(int i = 0; i < MAX_LOGS; i++)
+	{
+		if(MaxVal < (int32_t)LogBufferLocal[i].logMeasure)
+			MaxVal = (int32_t)LogBufferLocal[i].logMeasure;
+
+	}
+
+	for(int i = 0; i < LOG_GRAPHIC_W; i++)
+	{
+		if((int32_t)LogBufferLocal[LogBufferIndex].logMeasure > 0)
+			y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		else
+			y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		Display.drawPixel(LOG_GRAPHIC_X + i, y, ILI9341_YELLOW);
+		if(i % 2 == 0)
+			LogBufferIndex++;
+		if(i == 0)
+			y_old = y;
+		if(y_old != y && abs(y_old - y) > 1)
+		{
+			if(y_old > y)
+				Display.drawFastVLine(LOG_GRAPHIC_X + i, y, y_old - y, ILI9341_YELLOW);
+			else
+				Display.drawFastVLine(LOG_GRAPHIC_X + i, y_old, y - y_old, ILI9341_YELLOW);
+			y_old = y;
+		}
+	}		
+
+}
+
+void DrawLogGraphic()
+{
+	bool ExitGraphics = false;
+	uint8_t KeyPress = MAX_KEY;
+	LOGS_DEF LogBufferReordered[MAX_LOGS];
+	if(LastLogIndex != 0)
+	{
+		ClearDisplay(false);
+		DisplayRefresh.restart();
+		DrawTopInfo();
+		DrawNavButtons(DRAW_OK);	
+		while(!ExitGraphics)
+		{
+			DoTasks();
+			memset(LogBufferReordered, 0x00, sizeof(LOGS_DEF) * MAX_LOGS);
+			if(DisplayRefresh.hasPassed(500, true))
+			{
+				DrawTopInfo();
+				DrawNavButtons(DRAW_OK);
+				Display.fillRect(LOG_GRAPHIC_X + 1, LOG_GRAPHIC_Y + 1, LOG_GRAPHIC_W - 1, LOG_GRAPHIC_H - 1, ILI9341_BLACK);
+			}
+			Display.setFont(Arial_24_Bold);
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setCursor(CENTER_ALIGN("Log grafico"), MENU_TITLE_POS);
+			Display.print("Log grafico");	
+			for(int i = LastLogIndex; i < MAX_LOGS; i++)
+			{
+				LogBufferReordered[i - LastLogIndex] = LogBuffer[i];
+			}
+			for(int i = 0; i < LastLogIndex; i++)
+			{
+				LogBufferReordered[MAX_LOGS - 1 - LastLogIndex + i] = LogBuffer[i];
+			}
+			DrawGraphLog(LogBufferReordered);
+			KeyPress = ButtonPressed();
+			switch(KeyPress)
+			{
+				case UP:	
+					break;
+				case DOWN:			
+					break;
+				case OK:	
+					break;
+				case BACK:
+					AnalyzerPage = LOGS;
+					ExitGraphics = true;
+					break;
+				default:
+					break;
+			}
+		
+			// if(OldItem != Item)
+			// {
+				// ClearMenu();
+				// OldItem = Item;
+			// }
+		}	
+	}
+	else
+	{
+		AnalyzerPage = LOGS;
+		DrawPopUp("Nessun log", 2000);
+	}	
+}
+
 
 void DrawLogMenu()
 {
@@ -1362,7 +1517,250 @@ void DrawAlarmPage()
 }
 
 
-static void ChangeTimeDate(bool isTime)
+static void SetAndShowSwitchStatus()
+{
+	bool ExitStatusRele = false;
+	uint8_t KeyPress = MAX_KEY;
+	bool SwitchStatus = false, OldSwitchStatus = false;
+	String SwitchStatusStr = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_BACK);	
+	SwitchStatus = Switch.isActive;
+	OldSwitchStatus = !SwitchStatus;
+	while(!ExitStatusRele)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_BACK);
+		}
+		if(OldSwitchStatus != SwitchStatus)
+		{
+			ClearMenu();
+			OldSwitchStatus = SwitchStatus;
+			Display.setFont(Arial_24_Bold);
+			if(SwitchStatus)
+			{
+				SwitchStatusStr = "ACCESA";
+				Display.fillRoundRect(CENTER_ALIGN_BUTT(SwitchStatusStr.c_str()) - 2, CENTER_POS - 12, TEXT_LENGHT(SwitchStatusStr.c_str()) + 2, Display.fontCapHeight() + 2, 2, ILI9341_RED);
+			}
+			else
+			{
+				SwitchStatusStr = "SPENTA";
+				Display.fillRoundRect(CENTER_ALIGN_BUTT(SwitchStatusStr.c_str()) - 2, CENTER_POS - 12, TEXT_LENGHT(SwitchStatusStr.c_str()) + 2, Display.fontCapHeight() + 2, 2, ILI9341_GREEN);
+			}
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setCursor(CENTER_ALIGN_BUTT(SwitchStatusStr.c_str()), CENTER_POS - 10);
+			Display.print(SwitchStatusStr.c_str());			
+		}
+
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:
+			case DOWN:
+				SwitchStatus = !SwitchStatus;			
+				break;
+			case OK:	
+				if(SwitchStatus)
+				{
+					if(Switch.alarmShutDown)
+						DrawInfoPopUp("Allarme attivo", 1000);
+					else
+						Switch.isActive = SwitchStatus;
+				}
+				else
+					Switch.isActive = SwitchStatus;
+				ExitStatusRele = true;
+				break;
+			case BACK:
+				ExitStatusRele = true;
+				break;
+			default:
+				break;
+		}
+	
+	}	
+}
+
+static void DrawReleStatisticsList()
+{
+	bool ExitReleStatistics = false;
+	uint8_t KeyPress = MAX_KEY;
+	uint8_t sec = 0, min = 0, hour = 0, day = 0;
+	String TimeOnStr = "", NSwitchStr = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_BACK);	
+	hour = Switch.powerOnTime / 3600;
+	min = (Switch.powerOnTime / 60) % 60;
+	sec = Switch.powerOnTime % 60;
+	day = Switch.powerOnTime / 86400;
+	TimeOnStr += String(day) + "d ";
+	TimeOnStr += (hour < 10 ? ("0" + String(hour) + "h "): String(hour) + "h ");
+	TimeOnStr += (min < 10 ? ("0" + String(min) + "m "): String(min) + "m ");
+	TimeOnStr += (sec < 10 ? ("0" + String(sec) + "s"): String(sec) + "s");
+	NSwitchStr = String(Switch.nSwitch);
+	while(!ExitReleStatistics)
+	{
+		DoTasks();
+		hour = Switch.powerOnTime / 3600;
+		min = (Switch.powerOnTime / 60) % 60;
+		sec = Switch.powerOnTime % 60;
+		day = Switch.powerOnTime / 86400;
+		TimeOnStr = "Tempo attivo: ";
+		TimeOnStr += String(day) + "d ";
+		TimeOnStr += (hour < 10 ? ("0" + String(hour) + "h "): String(hour) + "h ");
+		TimeOnStr += (min < 10 ? ("0" + String(min) + "m "): String(min) + "m ");
+		TimeOnStr += (sec < 10 ? ("0" + String(sec) + "s"): String(sec) + "s");
+		NSwitchStr = "Accensioni: " + String(Switch.nSwitch);
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_BACK);
+			ClearMenu();
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN("Stat. presa"), MENU_TITLE_POS);
+		Display.print("Stat. presa");
+		Display.setFont(Arial_13);
+		Display.setCursor(CENTER_ALIGN_BUTT(TimeOnStr.c_str()), MENU_TITLE_POS + 80);
+		Display.print(TimeOnStr.c_str());
+		Display.setCursor(CENTER_ALIGN_BUTT(NSwitchStr.c_str()), MENU_TITLE_POS + 120);
+		Display.print(NSwitchStr.c_str());
+		
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				break;
+			case DOWN:		
+				break;
+			case OK:	
+				break;
+			case BACK:
+				ExitReleStatistics = true;
+				break;
+			default:
+				break;
+		}
+
+	}
+
+}
+
+void DrawRelePage()
+{
+	bool ExitRelePage = false;
+	uint8_t TopItem = 0, ReleItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	String NumPage = "";
+	ClearDisplay(false);
+	DisplayRefresh.restart();
+	DrawTopInfo();
+	DrawNavButtons(DRAW_OK);	
+	while(!ExitRelePage)
+	{
+		DoTasks();
+		if(DisplayRefresh.hasPassed(500, true))
+		{
+			DrawTopInfo();
+			DrawNavButtons(DRAW_OK);
+		}
+		Display.setTextColor(ILI9341_WHITE);
+		Display.setFont(Arial_12);
+		NumPage = String(ReleItem + 1) + "/" + String(MAX_RELE_ITEM);
+		Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
+		Display.print(NumPage.c_str());
+		Display.setFont(Arial_24_Bold);
+		Display.setCursor(CENTER_ALIGN("Presa"), MENU_TITLE_POS);
+		Display.print("Presa");
+		Display.setFont(Arial_18);
+		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
+		{
+			int NewItem = TopItem + i;
+			if(NewItem >= MAX_RELE_ITEM)
+				break;
+			if(NewItem == ReleItem)
+			{
+				Display.setTextColor(ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ReleTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + Display.fontCapHeight(),
+										TEXT_LENGHT(ReleTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ReleTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 1 + Display.fontCapHeight(),
+										TEXT_LENGHT(ReleTitle[NewItem]), ILI9341_GREENYELLOW);
+				Display.drawFastHLine(CENTER_ALIGN(ReleTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)) + 2 + Display.fontCapHeight(),
+										TEXT_LENGHT(ReleTitle[NewItem]), ILI9341_GREENYELLOW);
+			}
+			else
+			{
+				Display.setTextColor(ILI9341_WHITE);
+			}
+			Display.setCursor(CENTER_ALIGN(ReleTitle[NewItem]), MENU_ITEMS_POS + (i * (Display.fontCapHeight() + 25)));
+			Display.print(ReleTitle[NewItem]);
+		}
+		KeyPress = ButtonPressed();
+		switch(KeyPress)
+		{
+			case UP:	
+				if(ReleItem > 0)
+					ReleItem--;
+				else
+					ReleItem = MAX_RELE_ITEM - 1;
+				break;
+			case DOWN:
+				if(ReleItem < MAX_RELE_ITEM - 1)
+					ReleItem++;
+				else
+					ReleItem = 0;			
+				break;
+			case OK:	
+				switch(ReleItem)
+				{
+					case STATUS:
+						SetAndShowSwitchStatus();
+						break;
+					case SET_TIMER:
+						ChangeTimeDate(false, true);
+						break;
+					case SET_ALARM:
+						ChangeEnum(0, true);
+						break;
+					case STATISTICS:
+						DrawReleStatisticsList();
+						break;
+					default:
+						break;
+				}
+				ClearDisplay(false);
+				break;
+			case BACK:
+				AnalyzerPage = MAIN_MENU;
+				ExitRelePage = true;
+				break;
+			default:
+				break;
+		}
+	
+		if(OldItem != ReleItem)
+		{
+			ClearMenu();
+			Display.fillRect(RIGHT_ALIGN(NumPage.c_str()) - 14, MENU_TITLE_POS + 8, 50, 16, ILI9341_BLACK);
+			OldItem = ReleItem;
+		}	
+		if(ReleItem > MAX_MENU_VIEW_ITEMS - 1)
+		{
+			TopItem = ReleItem - (MAX_MENU_VIEW_ITEMS - 1);
+		}
+		else
+			TopItem = 0;
+	}
+}
+
+void ChangeTimeDate(bool isTime, bool isSwitch)
 {
 	bool ExitChangeTimeDate = false;
 	uint8_t hour_day = 0, minute_month = 0, year = 0, BoxPos = 0,  KeyPress = MAX_KEY;
@@ -1371,18 +1769,25 @@ static void ChangeTimeDate(bool isTime)
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_OK);
-	if(isTime)
+	if(isTime || isSwitch)
 	{
-		hour_day = Time.hour;
-		minute_month = Time.minute;
-		if(hour_day < 10)
-			TimeDateStr = "0" + String(hour_day);
+		if(isTime)
+		{
+			hour_day = Time.hour;
+			minute_month = Time.minute;
+			if(hour_day < 10)
+				TimeDateStr = "0" + String(hour_day);
+			else
+				TimeDateStr = String(hour_day);
+			if(minute_month < 10)
+				TimeDateStr += ":0" + String(minute_month);
+			else
+				TimeDateStr += ":" + String(minute_month);
+		}
 		else
-			TimeDateStr = String(hour_day);
-		if(minute_month < 10)
-			TimeStr += ":0" + String(minute_month);
-		else
-			TimeStr += ":" + String(minute_month);
+		{
+			TimeDateStr = "00:00";
+		}
 	}
 	else
 	{
@@ -1391,15 +1796,15 @@ static void ChangeTimeDate(bool isTime)
 		BoxPos = 1;
 		year = Time.year % 100;
 		if(hour_day < 10)
-			DateStr = "0" + String(hour_day);
+			TimeDateStr = "0" + String(hour_day);
 		else
-			DateStr = String(hour_day);
+			TimeDateStr = String(hour_day);
 		if(minute_month < 10)
-			DateStr += "/0" + String(minute_month);
+			TimeDateStr += "/0" + String(minute_month);
 		else
-			DateStr += "/" + String(minute_month);
+			TimeDateStr += "/" + String(minute_month);
 		
-		DateStr += "/" + String(year);
+		TimeDateStr += "/" + String(year);
 	}
 	while(!ExitChangeTimeDate)
 	{
@@ -1409,7 +1814,7 @@ static void ChangeTimeDate(bool isTime)
 			DrawTopInfo();
 			DrawNavButtons(DRAW_OK);
 		}
-		if(isTime)
+		if(isTime || isSwitch)
 		{
 			if(hour_day < 10)
 				TimeDateStr = "0" + String(hour_day);
@@ -1435,10 +1840,18 @@ static void ChangeTimeDate(bool isTime)
 		}
 		Display.setTextColor(ILI9341_WHITE);
 		Display.setFont(Arial_24_Bold);
-		if(isTime)
+		if(isTime || isSwitch)
 		{
-			Display.setCursor(CENTER_ALIGN("Cambia ora"), MENU_TITLE_POS);
-			Display.print("Cambia ora");
+			if(isTime)
+			{
+				Display.setCursor(CENTER_ALIGN("Cambia ora"), MENU_TITLE_POS);
+				Display.print("Cambia ora");
+			}
+			else
+			{
+				Display.setCursor(CENTER_ALIGN("Imposta timer"), MENU_TITLE_POS);
+				Display.print("Imposta timer");				
+			}
 		}
 		else
 		{
@@ -1455,7 +1868,7 @@ static void ChangeTimeDate(bool isTime)
 		switch(KeyPress)
 		{
 			case UP:	
-				if(isTime)
+				if(isTime || isSwitch)
 				{
 					switch(BoxPos)
 					{
@@ -1503,7 +1916,7 @@ static void ChangeTimeDate(bool isTime)
 				}
 				break;
 			case DOWN:	
-				if(isTime)
+				if(isTime || isSwitch)
 				{
 					switch(BoxPos)
 					{
@@ -1551,7 +1964,7 @@ static void ChangeTimeDate(bool isTime)
 				}
 				break;
 			case OK:
-				if(isTime)
+				if(isTime || isSwitch)
 					BoxPos++;
 				else
 				{
@@ -1562,13 +1975,33 @@ static void ChangeTimeDate(bool isTime)
 					else if(BoxPos == 2)
 						BoxPos++;
 				}
-				if(isTime && BoxPos > 1)
+				if((isTime || isSwitch) && BoxPos > 1)
 				{
-					SetTime(hour_day, minute_month);
-					ExitChangeTimeDate = true;
-					DrawPopUp("Ora cambiata", 1000);
+					if(isTime)
+					{
+						SetTime(hour_day, minute_month);
+						ExitChangeTimeDate = true;
+						DrawPopUp("Ora cambiata", 1000);
+					}
+					else
+					{
+						if(hour_day == 0 && minute_month == 0)
+						{
+							if(Switch.haveTimer)
+								DrawPopUp("Timer cancellato", 1000);	
+							Switch.haveTimer = false;
+							Switch.timerDuration = 0;
+						}
+						else
+						{
+							Switch.timerDuration = (hour_day * 3600) + (minute_month * 60);
+							Switch.haveTimer = true;
+							DrawPopUp("Timer impostato", 1000);		
+						}
+						ExitChangeTimeDate = true;
+					}
 				}
-				if(!isTime && BoxPos > 2)
+				if((!isTime && !isSwitch) && BoxPos > 2)
 				{
 					SetDate(hour_day, minute_month, year);
 					ExitChangeTimeDate = true;
@@ -1676,15 +2109,24 @@ static void ChangeValue(uint8_t SettingIndex)
 	}
 }
 
-static void ChangeEnum(uint8_t SettingIndex)
+void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 {
 	bool ExitChangeEnum = false;
-	uint8_t KeyPress = MAX_KEY, BoxPos = 0;
+	uint8_t KeyPress = MAX_KEY, BoxPos = 0, MaxEnum = 0;
 	int32_t EnumItem = *(int32_t*)Settings[SettingIndex].settingVal;
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_OK);	
+	if(isSwitch)
+	{
+		EnumItem = 0;
+		MaxEnum = 2;
+	}
+	else
+	{
+		MaxEnum = Settings[SettingIndex].settingMax;
+	}
 
 	while(!ExitChangeEnum)
 	{
@@ -1694,20 +2136,37 @@ static void ChangeEnum(uint8_t SettingIndex)
 			DrawTopInfo();
 			DrawNavButtons(DRAW_OK);
 		}
-		Display.setTextColor(ILI9341_WHITE);
-		Display.setFont(Arial_24_Bold);
-		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
-		Display.print(Settings[SettingIndex].settingName);
-		Display.setFont(Arial_28_Bold);
-		if(TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) > DISPLAY_WIDTH)
-			Display.setFont(Arial_20_Bold);
-		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName), CENTER_POS);
-		Display.print(Settings[SettingIndex].enumPtr[EnumItem].enumName);
-		Display.drawRoundRect(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName)), 
-								CENTER_POS - 2, 
-								TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
-							  
-		
+		if(!isSwitch)
+		{
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setFont(Arial_24_Bold);
+			Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
+			Display.print(Settings[SettingIndex].settingName);
+			Display.setFont(Arial_28_Bold);
+			if(TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) > DISPLAY_WIDTH - 40)
+				Display.setFont(Arial_16_Bold);
+			Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName), CENTER_POS);
+			Display.print(Settings[SettingIndex].enumPtr[EnumItem].enumName);
+			Display.drawRoundRect(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName)), 
+									CENTER_POS - 2, 
+									TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
+								  
+		}
+		else
+		{
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setFont(Arial_24_Bold);
+			Display.setCursor(CENTER_ALIGN("Associa allarme"), MENU_TITLE_POS);
+			Display.print("Associa allarme");
+			Display.setFont(Arial_28_Bold);
+			if(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) + TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) > DISPLAY_WIDTH - 40)
+				Display.setFont(Arial_16_Bold);
+			Display.setCursor(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName), CENTER_POS);
+			Display.print(AlarmSwitchdEnum[EnumItem].enumName);
+			Display.drawRoundRect(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName)), 
+									CENTER_POS - 2, 
+									TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
+		}
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
@@ -1715,30 +2174,47 @@ static void ChangeEnum(uint8_t SettingIndex)
 				if(EnumItem > 0)
 					EnumItem--;
 				else
-					EnumItem = Settings[SettingIndex].settingMax;
+					EnumItem = MaxEnum;
 				break;
 			case DOWN:
-				if(EnumItem < Settings[SettingIndex].settingMax)
+				if(EnumItem < MaxEnum)
 					EnumItem++;
 				else
 					EnumItem = 0;
 				break;
 			case OK:
-				*(int32_t*)Settings[SettingIndex].settingVal = EnumItem;
-				WriteSetting(SettingIndex, EnumItem);
-				switch(Settings[SettingIndex].enumPtr[EnumItem].enumType)
+				if(!isSwitch)
 				{
-					case BOOLEAN_TYPE:
-						*(bool *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (bool)EnumItem;
-						break;
-					case LOG_MEASURE_TYPE:
-						*(uint8_t *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (uint8_t)EnumItem;
-						break;
-					default:
-						break;
+					*(int32_t*)Settings[SettingIndex].settingVal = EnumItem;
+					WriteSetting(SettingIndex, EnumItem);
+					switch(Settings[SettingIndex].enumPtr[EnumItem].enumType)
+					{
+						case BOOLEAN_TYPE:
+							*(bool *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (bool)EnumItem;
+							break;
+						case LOG_MEASURE_TYPE:
+							*(uint8_t *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (uint8_t)EnumItem;
+							break;
+						default:
+							break;
+					}
+					DrawPopUp("Valore salvato", 1000);
 				}
-				
-				DrawPopUp("Valore salvato", 1000);
+				else
+				{
+					if(EnumItem != 2)
+					{
+						*(uint8_t *)AlarmSwitchdEnum[EnumItem].enumValuePtr = (uint8_t)EnumItem;
+						DrawPopUp("Allarme impostato", 1000);
+						Switch.haveAlarm = true;
+						Switch.alarmShutDown = true;
+					}
+					else
+					{
+						Switch.haveAlarm = false;
+						Switch.alarmShutDown = false;						
+					}
+				}
 				ExitChangeEnum = true;
 				break;
 			case BACK:
@@ -1847,15 +2323,15 @@ void DrawSettingPage()
 			{
 				case DATE_TYPE:
 					if(Item == CHANGE_TIME)
-						ChangeTimeDate(true);
+						ChangeTimeDate(true, false);
 					else
-						ChangeTimeDate(false);
+						ChangeTimeDate(false, false);
 					break;
 				case VALUE_TYPE:
 					ChangeValue(Item);
 					break;
 				case ENUM_TYPE:
-					ChangeEnum(Item);
+					ChangeEnum(Item, false);
 					break;
 				default:
 					break;

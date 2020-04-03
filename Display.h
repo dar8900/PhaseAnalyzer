@@ -8,9 +8,9 @@
 #include <SPI.h>
 #include <Arduino.h>
 
-#define CS_PIN  8
-#define TFT_DC  9
-#define TFT_CS 10
+#define TOUCH_CS_PIN 	  6
+#define TFT_DC  		  9
+#define TFT_CS 			 10
 
 
 #define DISPLAY_WIDTH		(Display.width())
@@ -21,6 +21,7 @@
 #define LEFT_ALIGN				0
 #define CENTER_ALIGN(Str)		((DISPLAY_WIDTH - Display.strPixelLen(Str)) / 2)
 #define RIGHT_ALIGN(Str)     	(DISPLAY_WIDTH - Display.strPixelLen(Str))
+#define CENTER_ALIGN_BUTT(Str)	((DISPLAY_WIDTH - 40 - Display.strPixelLen(Str)) / 2)
 
 #define TOP_POS					0
 #define CENTER_POS				(DISPLAY_HIGH / 2)
@@ -44,6 +45,12 @@
 #define GRAPHIC_W				200 //(DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2)
 #define GRAPHIC_H				190
 #define GRAPHIC_HALF			(GRAPHIC_Y + (GRAPHIC_H / 2))
+
+#define LOG_GRAPHIC_Y			(MENU_TITLE_POS + 50)
+#define LOG_GRAPHIC_W			256 
+#define LOG_GRAPHIC_X			((DISPLAY_WIDTH - 40 - LOG_GRAPHIC_W) / 2)
+#define LOG_GRAPHIC_H			90
+#define LOG_GRAPHIC_HALF		(LOG_GRAPHIC_Y + (LOG_GRAPHIC_H / 2))
 
 // // Color definitions
 // #define ILI9341_BLACK       0x0000      /*   0,   0,   0 */
@@ -127,14 +134,20 @@ void DisplaySetup(uint8_t Rotation);
 void DisplaySetRotation(uint8_t Rotation);
 void DrawPopUp(char *Msg, uint16_t Delay);
 void DrawAlarmPopUp(char *Msg, uint16_t Delay);
+void DrawInfoPopUp(char *Msg, uint16_t Delay);
 
 void DrawMainMenu();
 void DrawMeasurePage();
 void DrawGraphicsPage();
 void DrawLogsList();
+void DrawLogGraphic();
 void DrawLogMenu();
 void DrawAlarmPage();
+void DrawRelePage();
 void DrawSettingPage();
 void DrawResetPage();
 
+
+void ChangeTimeDate(bool isTime, bool isSwitch);
+void ChangeEnum(uint8_t SettingIndex, bool isSwitch);
 #endif
