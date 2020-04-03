@@ -109,7 +109,7 @@ static void CalcMaxMin(MEASURES_VAR *Measure)
 {
 	if(Measure->max < Measure->actual)
 		Measure->max = Measure->actual;
-	if(Measure->min > Measure->actual || (int32_t)Measure->min == 0)
+	if(Measure->min > Measure->actual || (int32_t)(Measure->min * 100) == 0)
 		Measure->min = Measure->actual;
 }
 
@@ -211,7 +211,7 @@ void GetMeasure()
 		Current.actual = sqrtCurrent * 16 / 4096;
 		Voltage.actual = sqrtVoltage * 230 / 4096;
 		
-		if(Current.actual < 0.01)
+		if(Current.actual < 0.05)
 		{
 			Current.actual = 0.0;
 			PAtt.actual = 0.0;

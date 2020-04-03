@@ -156,6 +156,7 @@ NAV_BUTTON_COORD Down = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (2 * (NAV_BUTT_HIG
 NAV_BUTTON_COORD Ok_Back = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (NAV_BUTT_HIGH + NAV_BUTT_INTERLINE), NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_GREEN};
 	
 String LogList[MAX_LOGS];
+LOGS_DEF LogBufferReordered[MAX_LOGS];
 
 const char *MenuVoices[MAX_MENU_ITEMS] = 
 {
@@ -999,37 +1000,46 @@ void DrawGraphicsPage()
 
 static void FillLogList()
 {
-	for(int i = 0; i < MAX_LOGS; i++)
+	memset(LogBufferReordered, 0x00, sizeof(LOGS_DEF) * MAX_LOGS);
+	for(int i = LastLogIndex; i < MAX_LOGS; i++)
 	{
-		if(i < LastLogIndex)
+		LogBufferReordered[i - LastLogIndex] = LogBuffer[i];
+	}
+	for(int i = 0; i < LastLogIndex; i++)
+	{
+		LogBufferReordered[MAX_LOGS - 1 - LastLogIndex + i] = LogBuffer[i];
+	}
+	for(int i = MAX_LOGS - 1; i >= 0; i--)
+	{
+		if(LogBufferReordered[i].timeStamp != 0)
 		{
-			DateTime LogTime(LogBuffer[i].timeStamp);				
-			LogList[i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
-			LogList[i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
-			LogList[i] += ":" + (LogTime.second() < 10 ? "0" + String(LogTime.second()) : String(LogTime.second()));
-			LogList[i] += "  " + (LogTime.day() < 10 ? "0" + String(LogTime.day()) : String(LogTime.day()));
-			LogList[i] += "/" + (LogTime.month() < 10 ? "0" + String(LogTime.month()) : String(LogTime.month()));
-			LogList[i] += "/" + String(LogTime.year() % 100);
-			LogList[i] += " " + String(LogBuffer[i].logMeasure, 3);
+			DateTime LogTime(LogBufferReordered[i].timeStamp);				
+			LogList[MAX_LOGS - 1 - i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
+			LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
+			LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.second() < 10 ? "0" + String(LogTime.second()) : String(LogTime.second()));
+			LogList[MAX_LOGS - 1 - i] += "  " + (LogTime.day() < 10 ? "0" + String(LogTime.day()) : String(LogTime.day()));
+			LogList[MAX_LOGS - 1 - i] += "/" + (LogTime.month() < 10 ? "0" + String(LogTime.month()) : String(LogTime.month()));
+			LogList[MAX_LOGS - 1 - i] += "/" + String(LogTime.year() % 100);
+			LogList[MAX_LOGS - 1 - i] += " " + String(LogBufferReordered[i].logMeasure, 3);
 			switch(MeasureToLog)
 			{
 				case CURRENT_LOG:
-					LogList[i] += "A";
+					LogList[MAX_LOGS - 1 - i] += "A";
 					break;
 				case VOLTAGE_LOG:
-					LogList[i] += "V";
+					LogList[MAX_LOGS - 1 - i] += "V";
 					break;
 				case P_ATT_LOG:
-					LogList[i] += "W";
+					LogList[MAX_LOGS - 1 - i] += "W";
 					break;
 				case PREA_LOG:
-					LogList[i] += "VAr";
+					LogList[MAX_LOGS - 1 - i] += "VAr";
 					break;
 				case P_APP_LOG:
-					LogList[i] += "VA";
+					LogList[MAX_LOGS - 1 - i] += "VA";
 					break;
 				case PF_LOG:
-					LogList[i] += "";
+					LogList[MAX_LOGS - 1 - i] += "";
 					break;
 				default:
 					break;
@@ -1037,8 +1047,9 @@ static void FillLogList()
 		}
 		else
 		{
-			if(!LogFull)
-				LogList[i] = "";
+			LogList[MAX_LOGS - 1 - i] = "";
+			if(i == MAX_LOGS - 1)
+				LogList[MAX_LOGS - 1 - i] = "Caricamento valore...";
 		}
 	}
 }
@@ -1047,9 +1058,10 @@ static void FillLogList()
 void DrawLogsList()
 {
 	bool ExitLogs = false, RefreshNumPage = false;
-	uint8_t TopItem = 0, LogItem = 0, OldItem = 0, KeyPress = MAX_KEY;
+	uint8_t TopItem = 1, LogItem = 1, OldItem = 0, KeyPress = MAX_KEY;
 	uint8_t MaxList = 0;
 	String NumPage = "";
+	Chrono RefreshList;
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
@@ -1061,15 +1073,19 @@ void DrawLogsList()
 			if(!LogFull)
 				MaxList = LastLogIndex;
 			else
-				MaxList = MAX_LOGS;
+				MaxList = MAX_LOGS - 1;
 			DoTasks();
 			FillLogList();
 			if(DisplayRefresh.hasPassed(500, true))
 			{
 				DrawTopInfo();
 				DrawNavButtons(DRAW_OK);
-				ClearMenu();
 				RefreshNumPage = true;
+			}
+			if(EnableLog)
+			{
+				if(RefreshList.hasPassed((SettingsVals[SET_LOG_TIME] * 1000) / 2, true))
+					ClearMenu();
 			}
 			Display.setTextColor(ILI9341_WHITE);
 			Display.setFont(Arial_12);
@@ -1106,7 +1122,7 @@ void DrawLogsList()
 			switch(KeyPress)
 			{
 				case UP:	
-					if(LogItem > 0)
+					if(LogItem > 1)
 						LogItem--;
 					else
 						LogItem = MaxList - 1;
@@ -1115,7 +1131,7 @@ void DrawLogsList()
 					if(LogItem < MaxList - 1)
 						LogItem++;
 					else
-						LogItem = 0;			
+						LogItem = 1;			
 					break;
 				case OK:	
 					break;
@@ -1144,7 +1160,7 @@ void DrawLogsList()
 				TopItem = LogItem - (MAX_MENU_VIEW_ITEMS - 1);
 			}
 			else
-				TopItem = 0;
+				TopItem = 1;
 		}
 	}
 	else
@@ -1196,7 +1212,6 @@ void DrawLogGraphic()
 {
 	bool ExitGraphics = false;
 	uint8_t KeyPress = MAX_KEY;
-	LOGS_DEF LogBufferReordered[MAX_LOGS];
 	if(LastLogIndex != 0)
 	{
 		ClearDisplay(false);
