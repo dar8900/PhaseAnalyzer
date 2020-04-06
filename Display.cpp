@@ -8,6 +8,7 @@
 #include "Alarms.h"
 #include "Logs.h"
 #include "Rele.h"
+#include "BT.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -58,15 +59,6 @@ typedef struct
 	MEASURE_LINE 	measureL2;
 	MEASURE_LINE    measureL3;
 }MEASURE_PAGE;
-
-
-typedef struct 
-{
-	double value;
-	char   odg;
-	double rescale;
-}RANGES;
-
 
 
 const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] = 
@@ -144,11 +136,18 @@ const uint8_t ReleTimerIcon[] =
 	0xc0, 0x60, 0x60, 0xc0, 0x1f, 0x00, 0x00, 0x00, 
 };
 
+const uint8_t BtIcon[] =
+{
+	0x60, 0x00, 0x51, 0x20, 0x4b, 0xa0, 0x49, 0x20, 
+	0x59, 0x20, 0x61, 0x20, 0x61, 0x20, 0x51, 0x20, 
+	0x49, 0x20, 0x49, 0x20, 0x51, 0x70, 0x61, 0x20, 
+};
+
 XPT2046_Touchscreen Touch(TOUCH_CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
-Chrono TimeRefresh, DisplayRefresh, MeasureRefresh, LogInconTimer;
+Chrono TimeRefresh, DisplayRefresh, MeasureRefresh, LogInconTimer, BtRefresh;
 static bool LogInconToggle;
 
 NAV_BUTTON_COORD Up = {NAV_BUTT_X_START, NAV_BUTT_Y_START, NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
@@ -213,7 +212,7 @@ const char *ResetsTitle[MAX_RESETS] =
 	"Log",
 };
 
-static uint8_t SearchRange(double Value2Search)
+uint8_t SearchRange(double Value2Search)
 {
 	uint8_t Range = 0;
 	for(Range = 0; Range < RANGE_TAB_LENGHT; Range++)
@@ -243,6 +242,15 @@ void DoTasks()
 	CheckAlarms();
 	LogMeasure();
 	RefreshSwitchStatus();
+	
+	CheckBtDevConn();
+	if(BtDeviceConnected)
+	{
+		if(BtRefresh.hasPassed(500, true))
+			BtTransaction();			
+	}
+	else
+		BtRefresh.restart();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -541,6 +549,10 @@ static void DrawTopInfo()
 	if(Switch.haveTimer)
 	{
 		Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 33, TOP_POS, ReleTimerIcon, 12, 12, ILI9341_CYAN);
+	}
+	if(BtDeviceConnected)
+	{
+		Display.drawBitmap(LEFT_ALIGN + TEXT_LENGHT(TimeStr.c_str()) + 48, TOP_POS, BtIcon, 12, 12, ILI9341_BLUE);
 	}
 }
 

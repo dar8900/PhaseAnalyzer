@@ -127,9 +127,18 @@ typedef struct
 	uint8_t  displayRotation;
 }DISPLAY_VAR;
 
+typedef struct 
+{
+	double value;
+	char   odg;
+	double rescale;
+}RANGES;
+
 extern XPT2046_Touchscreen Touch;
 extern DISPLAY_VAR DisplayParam;
+extern const RANGES RangeTab[];
 
+uint8_t SearchRange(double Value2Search);
 void DisplaySetup(uint8_t Rotation);
 void DisplaySetRotation(uint8_t Rotation);
 void DrawPopUp(char *Msg, uint16_t Delay);

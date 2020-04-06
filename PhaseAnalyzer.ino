@@ -4,7 +4,7 @@
 #include "Time.h"
 #include "EepromAnalyzer.h"
 #include "Rele.h"
-
+#include "BT.h"
 
 
 uint8_t AnalyzerPage = MAIN_MENU;
@@ -12,11 +12,13 @@ uint8_t AnalyzerPage = MAIN_MENU;
 void setup()
 {
 	Serial.begin(9600);
+	// while(!Serial){}
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
 	RtcInit();
 	InitMemory();
 	SwitchInit();
+	BtInit();
 }
 
 void loop()
