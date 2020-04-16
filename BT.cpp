@@ -28,23 +28,31 @@ typedef enum
 	SEND_EN_ATT,
 	SEND_EN_REA,
 	SEND_EN_APP,
+	RECEIVE_SIM_I,
+	RECEIVE_SIM_V,
+	RECEIVE_SIM_DELAY_I,
+	RECEIVE_SIM_DELAY_V,
 	MAX_STATES
 }BT_STATES;
 
 const BT_RESPONSES_DEF BtResponseTab[MAX_STATES] = 
 {
 	// {"*B"   , SEND_WELCOME     , false },
-	{"ON"   , SWICH_ON_RELE    , true  },
-	{"OFF"  , SWICH_OFF_RELE   , true  },
-	{"*I"   , SEND_CURRENT     , false },
-	{"*V"   , SEND_VOLTAGE     , false },
-	{"*P"   , SEND_PF  	       , false },
-	{"*A"   , SEND_PATT        , false },
-	{"*r"   , SEND_PREA  	   , false },
-	{"*p"   , SEND_PAPP        , false },
-	{"*a"   , SEND_EN_ATT      , false },
-	{"*R"   , SEND_EN_REA      , false },
-	{"*q"   , SEND_EN_APP      , false },
+	{"ON"   			, SWICH_ON_RELE    		, true  },
+	{"OFF"  			, SWICH_OFF_RELE   		, true  },
+	{"*a"   			, SEND_CURRENT     		, false },
+	{"*b"   			, SEND_VOLTAGE     		, false },
+	{"*c"   			, SEND_PF  	       		, false },
+	{"*d"   			, SEND_PATT        		, false },
+	{"*e"   			, SEND_PREA  	   		, false },
+	{"*f"   			, SEND_PAPP        		, false },
+	{"*g"   			, SEND_EN_ATT      		, false },
+	{"*h"   			, SEND_EN_REA      		, false },
+	{"*i"   			, SEND_EN_APP      		, false },
+	{"SIM_I"   			, RECEIVE_SIM_I         , true  },
+	{"SIM_V"   			, RECEIVE_SIM_V         , true  },
+	{"SIM_DELAY_I"      , RECEIVE_SIM_DELAY_I   , true  },
+	{"SIM_DELAY_V"      , RECEIVE_SIM_DELAY_V   , true  },
 };
 
 bool BtDeviceConnected;
@@ -90,6 +98,7 @@ static void SendTextSM(uint16_t TabIndex)
 			Measure2Send = PApp.actual;
 			Udm = "VA";
 			IsAMeasure = true;
+			break;
 		case SEND_EN_ATT:   
 			Measure2Send = EnAtt.actual;
 			Udm = "Wh";
@@ -130,30 +139,74 @@ static void ActionSM(String Req)
 			continue;
 		else
 		{
-			if(BtResponseTab[TabIndex].stringKey == Req)
+			if(BtResponseTab[TabIndex].stringKey.equals(Req))
 			{
 				break;
-			}
+			}	
+			else if(Req.length() > 3)
+			{
+				char ReqChar[Req.length()];
+				Req.toCharArray(ReqChar, Req.length());
+				if(ReqChar[4] == 'I')
+				{
+					TabIndex = RECEIVE_SIM_I;
+					Req = String(ReqChar[5]) + (ReqChar[6] <= '9' ? String(ReqChar[6]) : "");
+				}
+				else if(ReqChar[4] == 'V')
+				{
+					TabIndex = RECEIVE_SIM_V;
+					Req = String(ReqChar[5]) + (ReqChar[6] <= '9' ? String(ReqChar[6]) : "") + (ReqChar[7] <= '9' ? String(ReqChar[7]) : "");					
+				}
+				else
+				{
+					if(ReqChar[10] == 'I')
+					{
+						TabIndex = RECEIVE_SIM_DELAY_I;
+						Req = String(ReqChar[11]) + (ReqChar[12] <= '9' ? String(ReqChar[12]) : "") + (ReqChar[13] <= '9' ? String(ReqChar[13]) : "");						
+					}
+					else
+					{
+						TabIndex = RECEIVE_SIM_DELAY_V;
+						Req = String(ReqChar[11]) + (ReqChar[12] <= '9' ? String(ReqChar[12]) : "") + (ReqChar[13] <= '9' ? String(ReqChar[13]) : "");	
+					}
+				}
+				break;
+			}	
 		}
 	}
-	switch(BtResponseTab[TabIndex].intKey)
+	if(TabIndex != MAX_STATES)
 	{
-		case SWICH_ON_RELE:
-			if(!Switch.haveTimer && !Switch.alarmShutDown)
-				Switch.isActive = true;
-			break;
-		case SWICH_OFF_RELE:
-			if(!Switch.haveTimer)
-				Switch.isActive = false;
-			else
-			{
-				Switch.haveTimer = false;
-				Switch.timerDuration = 0;
-				Switch.isActive = false;
-			}
-			break;
-		default:
-			break;
+		switch(BtResponseTab[TabIndex].intKey)
+		{
+			case SWICH_ON_RELE:
+				if(!Switch.haveTimer && !Switch.alarmShutDown)
+					Switch.isActive = true;
+				break;
+			case SWICH_OFF_RELE:
+				if(!Switch.haveTimer)
+					Switch.isActive = false;
+				else
+				{
+					Switch.haveTimer = false;
+					Switch.timerDuration = 0;
+					Switch.isActive = false;
+				}
+				break;
+			case RECEIVE_SIM_I:
+				SimCurrent = (double)(Req.toInt());
+				break;
+			case RECEIVE_SIM_V:
+				SimVoltage = (double)(Req.toInt());
+				break;
+			case RECEIVE_SIM_DELAY_I:
+				SimDelayI = (double)(Req.toInt());
+				break;
+			case RECEIVE_SIM_DELAY_V:
+				SimDelayV = (double)(Req.toInt());
+				break;
+			default:
+				break;
+		}
 	}
 }
 

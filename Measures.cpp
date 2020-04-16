@@ -35,6 +35,7 @@ static uint32_t EnAttCnt, EnReaCnt, EnAppCnt;
 
 int32_t CurrentRawVal[N_SAMPLE], VoltageRawVal[N_SAMPLE];
 
+double SimCurrent = 16.0, SimVoltage = 220.0, SimDelayI = 30, SimDelayV = 0.0;
 double SimCurrentRawVal[N_SAMPLE], SimVoltageRawVal[N_SAMPLE];
 
 bool simulationMode = SIM_ON;
@@ -47,8 +48,8 @@ static void SimWaves()
 	double PAttAcc = 0.0;
 	for(int i = 0; i < N_SAMPLE; i++)
 	{
-		SimCurrentRawVal[i] = (SIM_I_AMP(SIM_CURR) * sin((TO_RAD(2 * M_PI * SIM_FRQ) * i) + TO_RAD(SIM_DELAY_I)));
-		SimVoltageRawVal[i] = (SIM_V_AMP(SIM_VOLT) * sin((TO_RAD(2 * M_PI * SIM_FRQ) * i) + TO_RAD(SIM_DELAY_V)));
+		SimCurrentRawVal[i] = (SIM_I_AMP(SimCurrent) * sin((TO_RAD(2 * M_PI * SIM_FRQ) * i) + TO_RAD(SimDelayI)));
+		SimVoltageRawVal[i] = (SIM_V_AMP(SimVoltage) * sin((TO_RAD(2 * M_PI * SIM_FRQ) * i) + TO_RAD(SimDelayV)));
 		PAttAcc += ((SimCurrentRawVal[i] * 16 / 4096) * (SimVoltageRawVal[i] * 230 / 4096));
 		SimIAcc += (SimCurrentRawVal[i] * SimCurrentRawVal[i]);
 		SimVAcc += (SimVoltageRawVal[i] * SimVoltageRawVal[i]);
@@ -140,7 +141,8 @@ static void CalcAvg()
 		PfAvgCnt      = 0;	 
 		PAttAvgCnt    = 0; 	 
 		PReaAvgCnt    = 0;   
-		PAppAvgCnt    = 0;  	
+		PAppAvgCnt    = 0;  
+		AvgTimer_2.restart();
 	}
 	if(AvgTimer_2.hasPassed(100, true))
 	{

@@ -1000,12 +1000,6 @@ void DrawGraphicsPage()
 			default:
 				break;
 		}
-	
-		// if(OldItem != Item)
-		// {
-			// ClearMenu();
-			// OldItem = Item;
-		// }
 	}		
 }
 

@@ -4,7 +4,7 @@
 #define SIM_ON		true
 #define SIM_OFF		false
 
-#define SIM_CURR	        2.5
+#define SIM_CURR	        16
 #define SIM_VOLT	        220
 #define SIM_I_AMP(curr)		((curr * 4096 / 16) * 1.4142)
 #define SIM_V_AMP(volt)		((volt * 4096 / 230) * 1.4142)
@@ -40,6 +40,10 @@ extern double SimCurrentRawVal[];
 extern double SimVoltageRawVal[];
 
 extern bool simulationMode;
+extern double SimCurrent;
+extern double SimVoltage;
+extern double SimDelayI;
+extern double SimDelayV;
 
 void AnalogInit();
 void GetMeasure();
