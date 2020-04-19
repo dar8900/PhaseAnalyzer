@@ -1,6 +1,11 @@
 #include "PhaseAnalyzer.h"
 #include "Time.h"
 
+#define DFLT_HOUR  		0
+#define DFLT_MINUTE 	0
+#define DFLT_DAY  		1
+#define DFLT_MONTH  	1
+#define DFLT_YEAR  		2020
 
 static RTC_DS1307 rtc;
 DateTime RtcTimeDate;
@@ -38,10 +43,9 @@ void RtcInit()
 	{
 		if (! rtc.isrunning())
 		{
-			rtc.adjust(DateTime(2020, 3, 27, 16, 10, 0)); 
+			rtc.adjust(DateTime(DFLT_YEAR, DFLT_MONTH, DFLT_DAY, DFLT_HOUR, DFLT_MINUTE, 0)); 
 		}
 	}
-	// rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // DA ELIMINARE 
 }
 
 void GetTime()

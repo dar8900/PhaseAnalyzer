@@ -251,6 +251,7 @@ void BtInit()
 
 void CheckBtDevConn()
 {
+	// DBG("Controllo BT");
 	if(digitalRead(BT_STATE_PIN))
 		BtDeviceConnected = true;
 	else

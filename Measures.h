@@ -33,8 +33,8 @@ extern MEASURES_VAR EnAtt;
 extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
-extern int32_t CurrentRawVal[];
-extern int32_t VoltageRawVal[];
+extern double CurrentRawVal[];
+extern double VoltageRawVal[];
 
 extern double SimCurrentRawVal[];
 extern double SimVoltageRawVal[];

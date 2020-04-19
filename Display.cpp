@@ -929,26 +929,26 @@ static void DrawGraph()
 	{
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
-			if(MaxValI < CurrentRawVal[i])
-				MaxValI = CurrentRawVal[i];
-			if(MaxValV < VoltageRawVal[i])
-				MaxValV = VoltageRawVal[i];
+			if(MaxValI < (int32_t)CurrentRawVal[i])
+				MaxValI = (int32_t)CurrentRawVal[i];
+			if(MaxValV < (int32_t)VoltageRawVal[i])
+				MaxValV = (int32_t)VoltageRawVal[i];
 		}
 	
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
 			// CURRENT
-			if((int32_t)SimCurrentRawVal[i] > 0)
-				y = GRAPHIC_HALF - (CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+			if((int32_t)CurrentRawVal[i] > 0)
+				y = GRAPHIC_HALF - ((int32_t)CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
 			else
-				y = GRAPHIC_HALF - (CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - ((int32_t)CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
 			
 			// VOLTAGE
-			if((int32_t)SimCurrentRawVal[i] > 0)
-				y = GRAPHIC_HALF - (VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+			if((int32_t)VoltageRawVal[i] > 0)
+				y = GRAPHIC_HALF - ((int32_t)VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
 			else
-				y = GRAPHIC_HALF - (VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - ((int32_t)VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}
@@ -973,17 +973,17 @@ void DrawGraphicsPage()
 	while(!ExitGraphics)
 	{
 		DoTasks();
-		if(DisplayRefresh.hasPassed(500, true))
+		if(DisplayRefresh.hasPassed(250, true))
 		{
 			DrawTopInfo();
 			DrawNavButtons(DRAW_BACK);
 			Display.fillRect(GRAPHIC_X + 1, GRAPHIC_Y + 1, GRAPHIC_W - 1, GRAPHIC_H - 1, ILI9341_BLACK);
+			DrawGraph();
 		}
 		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
 		Display.setCursor(CENTER_ALIGN("Grafici"), MENU_TITLE_POS);
-		Display.print("Grafici");
-		DrawGraph();
+		Display.print("Grafici");	
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
