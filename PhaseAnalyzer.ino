@@ -12,7 +12,7 @@ uint8_t AnalyzerPage = MAIN_MENU;
 void setup()
 {
 	Serial.begin(115200);
-	while(!Serial){}
+	// while(!Serial){}
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
 	RtcInit();

@@ -523,7 +523,7 @@ static void DrawTopInfo()
 	Display.setFont(Arial_12);
 	Display.setCursor(LEFT_ALIGN, TOP_POS);
 	Display.print(TimeStr.c_str());
-	Info += ("FW" + String(FW_VERSION, 1));
+	Info += ("v " + String(FW_VERSION, 1));
 	if(simulationMode)
 		Info += " DEMO";
 	Display.setCursor(CENTER_ALIGN(Info.c_str()), TOP_POS);
@@ -939,16 +939,16 @@ static void DrawGraph()
 		{
 			// CURRENT
 			if((int32_t)CurrentRawVal[i] > 0)
-				y = GRAPHIC_HALF - ((int32_t)CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - ((int32_t)(CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
 			else
-				y = GRAPHIC_HALF - ((int32_t)CurrentRawVal[i] * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - ((int32_t)(CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
 			
 			// VOLTAGE
 			if((int32_t)VoltageRawVal[i] > 0)
-				y = GRAPHIC_HALF - ((int32_t)VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - ((int32_t)(VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
 			else
-				y = GRAPHIC_HALF - ((int32_t)VoltageRawVal[i] * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - ((int32_t)(VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}

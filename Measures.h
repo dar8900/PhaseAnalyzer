@@ -13,6 +13,10 @@
 #define SIM_DELAY_V          0
 
 #define PF_INVALID 2.0
+#define TO_ADC_VAL(volt)   (volt * 4096 / 3.3)
+
+#define CURRENT_BIAS 	1.915
+#define VOLTAGE_BIAS 	1.704
 
 typedef struct
 {
@@ -33,8 +37,8 @@ extern MEASURES_VAR EnAtt;
 extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
-extern double CurrentRawVal[];
-extern double VoltageRawVal[];
+extern volatile double CurrentRawVal[];
+extern volatile double VoltageRawVal[];
 
 extern double SimCurrentRawVal[];
 extern double SimVoltageRawVal[];
