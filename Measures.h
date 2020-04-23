@@ -12,6 +12,9 @@
 #define SIM_DELAY_I          20
 #define SIM_DELAY_V          0
 
+#define VOLT_ADCVAL_CONV	(3.3 / 4096.0)
+
+
 #define PF_INVALID 2.0
 #define TO_ADC_VAL(volt)   (volt * 4096 / 3.3)
 

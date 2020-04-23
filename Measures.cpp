@@ -17,6 +17,9 @@
 
 #define TO_RAD(grd) (grd * M_PI / 180)
 
+#define TA_TURN_RATIO		1000.0
+#define BURDEN_RESISTOR		70.0
+
 
 
 enum
@@ -235,6 +238,7 @@ void AcdCallBackFunc()
 void GetMeasure()
 {
 	double CurrentBiased = 0.0, VoltageBiased = 0.0;
+	double TmpCurrentCalc = 0.0, TmpVoltageCalc = 0.0;
 	double sqrtCurrent = 0.0, sqrtVoltage = 0.0;
 	bool InvalidPf = false;
 	// int32_t DbgCurr = 0, DbgVolt = 0;
@@ -247,7 +251,9 @@ void GetMeasure()
 				CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS);
 				VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
 				// DBG("Current Raw: ," + String(CurrentBiased));
-				PAttAcc += (((((sqrt(CurrentBiased * CurrentBiased) * 3.3) / 4096.0) / 70) * 1000) * (sqrt(VoltageBiased * VoltageBiased) * 0.337));
+				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO);
+				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * 0.337);
+				PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
 				CurrentAcc += (CurrentBiased * CurrentBiased);
 				VoltageAcc += (VoltageBiased * VoltageBiased);
 			}
@@ -265,7 +271,7 @@ void GetMeasure()
 				
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
-				Current.actual = ((((sqrtCurrent * 3.3) / 4096.0) / 70) * 1000);
+				Current.actual = ((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO;
 				Voltage.actual = sqrtVoltage * 0.337; 
 				// DBG(sqrtVoltage);
 				
@@ -296,15 +302,14 @@ void GetMeasure()
 	}
 
 	PApp.actual = Current.actual * Voltage.actual;
-	if(!InvalidPf)
-	{
+	if((int64_t)PApp.actual != 0)
 		Pf.actual = PAtt.actual / PApp.actual;
-		if(isnan(Pf.actual))
-			Pf.actual = PF_INVALID;
-	}
-	else
+	else 
+		InvalidPf = true;
+	if(InvalidPf || isnan(Pf.actual))
+	{
 		Pf.actual = PF_INVALID;
-	DBG(Pf.actual);
+	}
 	
 	
 	PRea.actual = PApp.actual - PAtt.actual;
