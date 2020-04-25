@@ -1,7 +1,6 @@
 #include "PhaseAnalyzer.h"
 #include "Display.h"
 #include "Touch.h"
-#include "Measures.h"
 #include "Time.h"
 #include "Settings.h"
 #include "EepromAnalyzer.h"
@@ -157,6 +156,8 @@ NAV_BUTTON_COORD Ok_Back = {NAV_BUTT_X_START, NAV_BUTT_Y_START + (NAV_BUTT_HIGH 
 String LogList[MAX_LOGS];
 LOGS_DEF LogBufferReordered[MAX_LOGS];
 
+int32_t CurrentGraphicCopy[N_SAMPLE], VoltageGraphicCopy[N_SAMPLE];
+
 const char *MenuVoices[MAX_MENU_ITEMS] = 
 {
 	"Misure",
@@ -196,7 +197,6 @@ const char *AlarmsTitle[MAX_ALARMS] =
 const char *ReleTitle[MAX_RELE_ITEM] = 
 {
 	"Stato presa",
-	"Imposta allarme",
 	"Imposta timer",
 	"Statistiche",
 };
@@ -210,6 +210,7 @@ const char *ResetsTitle[MAX_RESETS] =
 	"Medie",
 	"Energie",
 	"Log",
+	"Stat. presa",
 };
 
 uint8_t SearchRange(double Value2Search)
@@ -251,6 +252,7 @@ void DoTasks()
 	}
 	else
 		BtRefresh.restart();
+	WriteSwitchStatistics(false);
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -480,8 +482,8 @@ bool DrawAskPopUp(char *Msg)
 	Display.drawRoundRect(2, 2, DISPLAY_WIDTH - 3, DISPLAY_HIGH - 3, 2, ILI9341_WHITE);
 	while(1)
 	{
-		KeyPress = ButtonPressed();
 		DoTasks();
+		KeyPress = ButtonPressed();
 		if(KeyPress == OK)
 		{
 			Confirm = true;
@@ -929,26 +931,31 @@ static void DrawGraph()
 	{
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
-			if(MaxValI < (int32_t)CurrentRawVal[i])
-				MaxValI = (int32_t)CurrentRawVal[i];
-			if(MaxValV < (int32_t)VoltageRawVal[i])
-				MaxValV = (int32_t)VoltageRawVal[i];
+			CurrentGraphicCopy[i] = (int32_t)CurrentRawVal[i];
+			VoltageGraphicCopy[i] = (int32_t)VoltageRawVal[i];
+		}		
+		for(int i = 0; i < GRAPHIC_W; i++)
+		{
+			if(MaxValI < CurrentGraphicCopy[i])
+				MaxValI = CurrentGraphicCopy[i];
+			if(MaxValV < VoltageGraphicCopy[i])
+				MaxValV = VoltageGraphicCopy[i];
 		}
 	
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
 			// CURRENT
-			if((int32_t)CurrentRawVal[i] > 0)
-				y = GRAPHIC_HALF - ((int32_t)(CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
+			if(CurrentGraphicCopy[i] > 0)
+				y = GRAPHIC_HALF - (CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
 			else
-				y = GRAPHIC_HALF - ((int32_t)(CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - ((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
 			
 			// VOLTAGE
-			if((int32_t)VoltageRawVal[i] > 0)
-				y = GRAPHIC_HALF - ((int32_t)(VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
+			if(VoltageGraphicCopy[i] > 0)
+				y = GRAPHIC_HALF - ((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
 			else
-				y = GRAPHIC_HALF - ((int32_t)(VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - (VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}
@@ -1747,9 +1754,9 @@ void DrawRelePage()
 					case SET_TIMER:
 						ChangeTimeDate(false, true);
 						break;
-					case SET_ALARM:
-						ChangeEnum(0, true);
-						break;
+					// case SET_ALARM:
+						// ChangeEnum(0, true);
+						// break;
 					case STATISTICS:
 						DrawReleStatisticsList();
 						break;
@@ -2111,10 +2118,10 @@ static void ChangeValue(uint8_t SettingIndex)
 						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
 						WriteSetting(SettingIndex, NewValue);
 						DrawPopUp("Valore salvato", 1000);
+						ExitChangeValue = true;
 					}
 					else
 						DrawPopUp("Valore errato", 1000);
-					ExitChangeValue = true;
 				}
 				break;
 			case BACK:
@@ -2139,15 +2146,15 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_OK);	
-	if(isSwitch)
-	{
-		EnumItem = 2;
-		MaxEnum = 2;
-	}
-	else
-	{
+	// if(isSwitch)
+	// {
+		// EnumItem = 2;
+		// MaxEnum = 2;
+	// }
+	// else
+	// {
 		MaxEnum = Settings[SettingIndex].settingMax;
-	}
+	// }
 
 	while(!ExitChangeEnum)
 	{
@@ -2173,21 +2180,21 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 									TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
 								  
 		}
-		else
-		{
-			Display.setTextColor(ILI9341_WHITE);
-			Display.setFont(Arial_24_Bold);
-			Display.setCursor(CENTER_ALIGN("Associa allarme"), MENU_TITLE_POS);
-			Display.print("Associa allarme");
-			Display.setFont(Arial_28_Bold);
-			if(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) + TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) > DISPLAY_WIDTH - 40)
-				Display.setFont(Arial_16_Bold);
-			Display.setCursor(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName), CENTER_POS);
-			Display.print(AlarmSwitchdEnum[EnumItem].enumName);
-			Display.drawRoundRect(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName)), 
-									CENTER_POS - 2, 
-									TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
-		}
+		// else
+		// {
+			// Display.setTextColor(ILI9341_WHITE);
+			// Display.setFont(Arial_24_Bold);
+			// Display.setCursor(CENTER_ALIGN("Associa allarme"), MENU_TITLE_POS);
+			// Display.print("Associa allarme");
+			// Display.setFont(Arial_28_Bold);
+			// if(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) + TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) > DISPLAY_WIDTH - 40)
+				// Display.setFont(Arial_16_Bold);
+			// Display.setCursor(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName), CENTER_POS);
+			// Display.print(AlarmSwitchdEnum[EnumItem].enumName);
+			// Display.drawRoundRect(CENTER_ALIGN_BUTT(AlarmSwitchdEnum[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName)), 
+									// CENTER_POS - 2, 
+									// TEXT_LENGHT(AlarmSwitchdEnum[EnumItem].enumName) + 3, Display.fontCapHeight() + 5, 1, ILI9341_CYAN);
+		// }
 		KeyPress = ButtonPressed();
 		switch(KeyPress)
 		{
@@ -2213,7 +2220,7 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 						case BOOLEAN_TYPE:
 							*(bool *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (bool)EnumItem;
 							break;
-						case LOG_MEASURE_TYPE:
+						case UINT8_TYPE:
 							*(uint8_t *)Settings[SettingIndex].enumPtr[EnumItem].enumValuePtr = (uint8_t)EnumItem;
 							break;
 						default:
@@ -2221,21 +2228,21 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 					}
 					DrawPopUp("Valore salvato", 1000);
 				}
-				else
-				{
-					if(EnumItem != 2)
-					{
-						*(uint8_t *)AlarmSwitchdEnum[EnumItem].enumValuePtr = (uint8_t)EnumItem;
-						DrawPopUp("Allarme impostato", 1000);
-						Switch.haveAlarm = true;
-						// Switch.alarmShutDown = true;
-					}
-					else
-					{
-						Switch.haveAlarm = false;
-						Switch.alarmShutDown = false;						
-					}
-				}
+				// else
+				// {
+					// if(EnumItem != 2)
+					// {
+						// *(uint8_t *)AlarmSwitchdEnum[EnumItem].enumValuePtr = (uint8_t)EnumItem;
+						// DrawPopUp("Allarme impostato", 1000);
+						// Switch.haveAlarm = true;
+						// // Switch.alarmShutDown = true;
+					// }
+					// else
+					// {
+						// Switch.haveAlarm = false;
+						// Switch.alarmShutDown = false;						
+					// }
+				// }
 				ExitChangeEnum = true;
 				break;
 			case BACK:
@@ -2430,12 +2437,18 @@ void DrawResetPage()
 				switch(ResetItem)
 				{
 					case RESET_DFLT:
-						WriteResetDeflt();
-						delay(10);
-						CPU_RESTART;
+						if(ConfirmReset)
+						{
+							WriteResetDeflt();
+							delay(10);
+							CPU_RESTART;
+						}
 					case RESTART:
-						delay(10);
-						CPU_RESTART;
+						if(ConfirmReset)
+						{
+							delay(10);
+							CPU_RESTART;
+						}
 						break;
 					case RESET_MAX_MIN:
 						if(ConfirmReset)
@@ -2450,6 +2463,11 @@ void DrawResetPage()
 							ResetEnergies();					
 						break;
 					case RESET_LOG:
+						ResetLogs();
+						break;
+					case RESET_SWITCH_STAT:
+						ResetSwitchStatistics();
+						WriteSwitchStatistics(true);
 						break;
 					default:
 						break;

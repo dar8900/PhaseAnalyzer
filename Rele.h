@@ -19,9 +19,18 @@ typedef struct
 	uint8_t  associatedAlarm;
 }RELE_DEF;
 
+typedef enum
+{
+	NONE = 0,
+	OVER_CURRENT,
+	OVER_P_APP,
+	MAX_ALARMS_SWITCH
+}ALARMS_SWITCH;
+
 extern RELE_DEF Switch;
 
 void SwitchInit();
 void RefreshSwitchStatus();
+void ResetSwitchStatistics();
 
 #endif

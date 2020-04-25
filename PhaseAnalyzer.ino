@@ -5,13 +5,16 @@
 #include "EepromAnalyzer.h"
 #include "Rele.h"
 #include "BT.h"
+#include "Logs.h"
 
+#pragma message ( "Seriale sotto linux: occhio!!!" )
 
 uint8_t AnalyzerPage = MAIN_MENU;
 
 void setup()
 {
 	Serial.begin(115200);
+
 	// while(!Serial){}
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
@@ -19,6 +22,8 @@ void setup()
 	InitMemory();
 	SwitchInit();
 	BtInit();
+	ReadAllLogs();
+	ReadSwitchStatistics();
 	DBG("Software started");
 }
 

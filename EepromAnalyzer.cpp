@@ -2,17 +2,20 @@
 #include "Settings.h"
 #include "EepromAnalyzer.h"
 #include "Display.h"
+#include "Rele.h"
 
-#define MAX_SETTINGS_MEMORY 	256	 // Max 64 settaggi
-#define SETTINGS_START_ADDR	      0
-#define SETTINGS_CHECKSUM_ADDR	513  // +4 bytes -> 517
+#define MAX_SETTINGS_MEMORY 				256	 // Max 64 settaggi
+#define SETTINGS_START_ADDR	    			  0
+#define SETTINGS_CHECKSUM_ADDR				513  // +4 bytes -> 517
 
-#define ENERGIES_ADDR			260 // +24 bytes -> 284
+#define SWITCH_STATISTICS_START_ADDR		260  // +6 bytes -> 266
 
-#define RESET_DFLT_ADDR			550 // +1 bytes -> 551
+#define ENERGIES_ADDR						270 // +24 bytes -> 294
+			
+#define RESET_DFLT_ADDR						550 // +1 bytes -> 551
 
 
-
+Chrono WriteSwitchStatisticsTimer(Chrono::SECONDS);
 
 bool InitMemory()
 {
@@ -125,7 +128,7 @@ void ReadAllSettings()
 				case BOOLEAN_TYPE:
 					*(bool *)Settings[settingIndex].enumPtr[0].enumValuePtr = (bool)SettingsVals[settingIndex];
 					break;
-				case LOG_MEASURE_TYPE:
+				case UINT8_TYPE:
 					*(uint8_t *)Settings[settingIndex].enumPtr[0].enumValuePtr = (uint8_t)SettingsVals[settingIndex];
 					break;
 				default:
@@ -156,4 +159,20 @@ bool ReadResetDflt()
 	else
 		isReset = false;
 	return isReset;
+}
+
+
+void WriteSwitchStatistics(bool IsAReset)
+{
+	if(WriteSwitchStatisticsTimer.hasPassed(900, true) || IsAReset)
+	{
+		EEPROM.put(SWITCH_STATISTICS_START_ADDR, Switch.powerOnTime);
+		EEPROM.put(SWITCH_STATISTICS_START_ADDR + 4, Switch.nSwitch);
+	}
+}
+
+void ReadSwitchStatistics()
+{
+	EEPROM.get(SWITCH_STATISTICS_START_ADDR, Switch.powerOnTime);
+	EEPROM.get(SWITCH_STATISTICS_START_ADDR + 4, Switch.nSwitch);	
 }

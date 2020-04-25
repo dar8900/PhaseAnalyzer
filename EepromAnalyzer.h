@@ -12,4 +12,6 @@ void WriteAllSettings(bool toDflt);
 void ReadAllSettings();
 void WriteResetDeflt();
 bool ReadResetDflt();
+void WriteSwitchStatistics(bool IsAReset);
+void ReadSwitchStatistics();
 #endif

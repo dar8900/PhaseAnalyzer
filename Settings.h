@@ -3,7 +3,7 @@
 
 typedef enum
 {
-	LOG_MEASURE_TYPE = 0,
+	UINT8_TYPE = 0,
 	BOOLEAN_TYPE,
 	MAX_ENUM_TYPE
 }ENUM_TAB_TYPE;
@@ -35,14 +35,16 @@ typedef enum
 	ENABLE_OVER_CURRENT,              //  6
 	UNDER_CURRENT_VALUE,              //  7
 	ENABLE_UNDER_CURRENT,             //  8
-	OVER_ATT_POWER_VALUE,             //  9
-	ENABLE_OVER_PATT_POWER,           // 10
-	UNDER_ATT_POWER_VALUE,            // 11
-	ENABLE_UNDER_PATT_POWER,          // 12
-	ALARM_INSERT_DELAY,				  // 13
-	AVG_TIME,                         // 14
-	SIMULATION_MODE,                  // 15
-	MAX_SETTINGS                      // 16
+	OVER_APP_POWER_VALUE,             //  9
+	ENABLE_OVER_PAPP_POWER,           // 10
+	UNDER_APP_POWER_VALUE,            // 11
+	ENABLE_UNDER_PAPP_POWER,          // 12
+	SET_SWITCH_ALARM,				  // 13
+	SWITCH_ALARM_ENABLE,			  // 14
+	ALARM_INSERT_DELAY,				  // 15
+	AVG_TIME,                         // 16
+	SIMULATION_MODE,                  // 17
+	MAX_SETTINGS                      // 18
 }SETTINGS_LIST;
 
 

@@ -5,7 +5,7 @@
 #include "EepromAnalyzer.h"
 #include "Measures.h"
 
-
+#undef WRITE_IN_EEPROM	
 
 LOGS_DEF LogBuffer[MAX_LOGS];
 uint16_t LastLogIndex;
@@ -30,38 +30,53 @@ static void WriteSingleLog()
 	memset(&LogBuffer[LastLogIndex], 0x00, LOG_SIZE);
 	LogBuffer[LastLogIndex].logMeasure = (float)*Measures4Log[MeasureToLog];
 	LogBuffer[LastLogIndex].timeStamp = RtcTimeDate.unixtime();
-	// EEPROM.put((LastLogIndex * LOG_SIZE) + LOGS_START_ADDR, LogBuffer[LastLogIndex]);
+#ifdef WRITE_IN_EEPROM	
+	EEPROM.put((LastLogIndex * LOG_SIZE) + LOGS_START_ADDR, LogBuffer[LastLogIndex]);
+#endif
 	LastLogIndex++;
 	if(LastLogIndex >= MAX_LOGS)
 	{
 		LastLogIndex = 0;
 		LogFull = true;
-		// EEPROM.update(LOG_FULL_ADDR, 1);
+	#ifdef WRITE_IN_EEPROM		
+		EEPROM.update(LOG_FULL_ADDR, 1);
+	#endif
 	}
-	// EEPROM.put(LAST_LOG_ADDR, LastLogIndex);
+#ifdef WRITE_IN_EEPROM	
+	EEPROM.put(LAST_LOG_ADDR, LastLogIndex);
+#endif	
 }
 
 void ReadAllLogs()
 {
+#ifdef WRITE_IN_EEPROM	
 	EEPROM.get(LAST_LOG_ADDR, LastLogIndex);
 	for(int LogIndex = 0; LogIndex < MAX_LOGS; LogIndex++)
 	{
 		EEPROM.get((LogIndex * LOG_SIZE) + LOGS_START_ADDR, LogBuffer[LogIndex]);
 	}
 	LogFull = (bool)EEPROM.read(LOG_FULL_ADDR);
+#endif	
 }
 
 void ResetLogs()
 {
+#ifdef WRITE_IN_EEPROM	
 	EEPROM.put(LAST_LOG_ADDR, 0);
+#endif	
 	LOGS_DEF DeleteValue;
 	memset(&DeleteValue, 0x00, LOG_SIZE);
 	for(int LogIndex = 0; LogIndex < MAX_LOGS; LogIndex++)
 	{
+		LogBuffer[LogIndex] = DeleteValue;
+	#ifdef WRITE_IN_EEPROM		
 		EEPROM.put((LogIndex * LOG_SIZE) + LOGS_START_ADDR, DeleteValue);
+	#endif
 	}
 	LogFull = false;
+#ifdef WRITE_IN_EEPROM	
 	EEPROM.update(LOG_FULL_ADDR, 0);
+#endif	
 	ReadAllLogs();
 }
 

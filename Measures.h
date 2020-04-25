@@ -4,8 +4,8 @@
 #define SIM_ON		true
 #define SIM_OFF		false
 
-#define SIM_CURR	        16
-#define SIM_VOLT	        220
+#define SIM_CURR	         16
+#define SIM_VOLT	         220
 #define SIM_I_AMP(curr)		((curr * 4096 / 16) * 1.4142)
 #define SIM_V_AMP(volt)		((volt * 4096 / 230) * 1.4142)
 #define SIM_FRQ		         0.28
@@ -14,15 +14,27 @@
 
 #define VOLT_ADCVAL_CONV	(3.3 / 4096.0)
 
+#define WAVE_PERIOD		     20
+#define N_SAMPLE		    200
 
-#define PF_INVALID 2.0
+// Periodo di presa dati in us (20 / 200 * 1000)
+#define ADC_TIMER_PERIOD	100 
+
+#define MAX_WINDOWS		     15 // Raccolgo dati per MAX_WINDOWS lunghezze d'onda
+
+#define PF_INVALID 		    2.0
 #define TO_ADC_VAL(volt)   (volt * 4096 / 3.3)
 
-#define CURRENT_BIAS 	1.297
-#define VOLTAGE_BIAS 	1.704
+#define CURRENT_BIAS 		1.297
+#define VOLTAGE_BIAS 		1.704
 
-#define TARP_I			0.05
-#define TARP_V			200.0
+#define VOLTAGE_CORRECTION	0.410
+#define CURRENT_CORRECTION	0.15
+
+
+#define TARP_I				0.05
+#define TARP_V				200.0
+
 
 
 typedef struct

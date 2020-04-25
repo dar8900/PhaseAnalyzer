@@ -7,6 +7,7 @@
 #include <XPT2046_Touchscreen.h>
 #include <SPI.h>
 #include <Arduino.h>
+#include "Measures.h"
 
 #define TOUCH_CS_PIN 	  6
 #define TFT_DC  		  9
@@ -42,7 +43,7 @@
 
 #define GRAPHIC_X				0
 #define GRAPHIC_Y				(MENU_TITLE_POS + 28)
-#define GRAPHIC_W				200 //(DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2)
+#define GRAPHIC_W				N_SAMPLE //(DISPLAY_WIDTH - (DISPLAY_WIDTH - NAV_BUTT_X_START) - 2)
 #define GRAPHIC_H				190
 #define GRAPHIC_HALF			(GRAPHIC_Y + (GRAPHIC_H / 2))
 

@@ -27,7 +27,23 @@ void RefreshSwitchStatus()
 		}
 		if(Switch.haveAlarm)
 		{
-			if(AlarmsTab[Switch.associatedAlarm * 2].isActive)
+			bool AlarmActive = false;
+			switch(Switch.associatedAlarm)
+			{
+				case NONE:
+					AlarmActive = false;
+					break;
+				case OVER_CURRENT:
+					AlarmActive = AlarmsTab[OVER_CURRENT_ALARM].isActive;
+					break;
+				case OVER_P_APP:
+					AlarmActive = AlarmsTab[OVER_PAPP_ALARM].isActive;
+					break;
+				default:
+					AlarmActive = false;
+					break;
+			}
+			if(AlarmActive)
 			{
 				Switch.isActive = false;
 				Switch.haveTimer = false;
@@ -72,4 +88,10 @@ void RefreshSwitchStatus()
 	}
 	else
 		SwitchTimer.restart();
+}
+
+void ResetSwitchStatistics()
+{
+	Switch.powerOnTime = 0;
+	Switch.nSwitch = 0;
 }

@@ -9,16 +9,12 @@
 #define CURRENT_PIN	A2  // ADC1
 #define VOLTAGE_PIN	A9  // ADC0
 
-#define N_SAMPLE	200
-
-#define TIMER_PERIOD	100
-
-#define MAX_WINDOWS		15
 
 #define TO_RAD(grd) (grd * M_PI / 180)
 
 #define TA_TURN_RATIO		1000.0
 #define BURDEN_RESISTOR		70.0
+
 
 
 
@@ -127,7 +123,7 @@ void AnalogInit()
 
 	adc->startSynchronizedContinuous(VOLTAGE_PIN, CURRENT_PIN);
 	
-	TimerStarted = AdcTimer.begin(AcdCallBackFunc, TIMER_PERIOD);
+	TimerStarted = AdcTimer.begin(AcdCallBackFunc, ADC_TIMER_PERIOD);
 	
 	Current.min = 16.0;
 	Voltage.min = 230.0;
@@ -251,8 +247,8 @@ void GetMeasure()
 				CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS);
 				VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
 				// DBG("Current Raw: ," + String(CurrentBiased));
-				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - 0.2;
-				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * 0.410);
+				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CURRENT_CORRECTION;
+				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * VOLTAGE_CORRECTION);
 				PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
 				CurrentAcc += (CurrentBiased * CurrentBiased);
 				VoltageAcc += (VoltageBiased * VoltageBiased);
@@ -271,8 +267,8 @@ void GetMeasure()
 				
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
-				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - 0.2;
-				Voltage.actual = sqrtVoltage * 0.410; 
+				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CURRENT_CORRECTION;
+				Voltage.actual = sqrtVoltage * VOLTAGE_CORRECTION; 
 				// DBG(sqrtVoltage);
 				
 				if(Current.actual < TARP_I || Voltage.actual < TARP_V)
