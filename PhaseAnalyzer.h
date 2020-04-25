@@ -23,7 +23,7 @@
 
 #define MIN_TO_SEC(min)			(min * 60)
 
-#define FW_VERSION	0.4
+#define FW_VERSION	0.5
 
 typedef enum
 {

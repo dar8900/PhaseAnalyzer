@@ -34,11 +34,11 @@ void RefreshSwitchStatus()
 				Switch.timerDuration = 0;
 				Switch.alarmShutDown = true;
 			}
-			else
-			{
-				Switch.haveAlarm = false;
-				Switch.alarmShutDown = false;
-			}
+		}
+		else
+		{
+			Switch.haveAlarm = false;
+			Switch.alarmShutDown = false;
 		}
 		if(SwitchPowerOnTimer.hasPassed(1000, true))
 			Switch.powerOnTime++;

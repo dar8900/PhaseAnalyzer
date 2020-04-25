@@ -251,8 +251,8 @@ void GetMeasure()
 				CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS);
 				VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
 				// DBG("Current Raw: ," + String(CurrentBiased));
-				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO);
-				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * 0.337);
+				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - 0.2;
+				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * 0.410);
 				PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
 				CurrentAcc += (CurrentBiased * CurrentBiased);
 				VoltageAcc += (VoltageBiased * VoltageBiased);
@@ -271,15 +271,15 @@ void GetMeasure()
 				
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
-				Current.actual = ((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO;
-				Voltage.actual = sqrtVoltage * 0.337; 
+				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - 0.2;
+				Voltage.actual = sqrtVoltage * 0.410; 
 				// DBG(sqrtVoltage);
 				
-				if(Current.actual < 0.25 || Voltage.actual < 200)
+				if(Current.actual < TARP_I || Voltage.actual < TARP_V)
 				{
-					if(Current.actual < 0.25)
+					if(Current.actual < TARP_I)
 						Current.actual = 0.0;
-					if(Voltage.actual < 200)
+					if(Voltage.actual < TARP_V)
 						Voltage.actual = 0.0;
 					PAtt.actual = 0.0;
 					InvalidPf = true;
@@ -314,7 +314,7 @@ void GetMeasure()
 	
 	PRea.actual = PApp.actual - PAtt.actual;
 	
-	if(FirstCalcMaxMinTimer.hasPassed(1000))
+	if(FirstCalcMaxMinTimer.hasPassed(2500))
 	{
 		CalcMaxMin(&Current);
 		CalcMaxMin(&Voltage);

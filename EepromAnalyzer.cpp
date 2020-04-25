@@ -43,6 +43,10 @@ bool InitMemory()
 			SettingToDefault();
 		ReadAllSettings();
 	}
+	// for(int settingIndex = 0; settingIndex < MAX_SETTINGS; settingIndex++)
+	// {
+	// 	DBG(SettingsVals[settingIndex]);
+	// }
 	return isEmpty;
 }
 
@@ -127,6 +131,10 @@ void ReadAllSettings()
 				default:
 					break;
 			}
+		}
+		else if(Settings[settingIndex].type == VALUE_TYPE)
+		{
+			*Settings[settingIndex].settingVal = SettingsVals[settingIndex];
 		}
 	}
 }
