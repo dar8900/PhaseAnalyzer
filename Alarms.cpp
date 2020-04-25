@@ -9,18 +9,19 @@
 
 ALARM_DEF AlarmsTab[MAX_ALARMS] = 
 {
-	{&Current.actual, SettingsVals[OVER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, false, false, false, "Corrente alta"},
-	{&Current.actual, SettingsVals[UNDER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, false, false, false, "Corrente bassa"},
-	{&PAtt.actual   , SettingsVals[ENABLE_OVER_PATT_POWER]	, 0, 0, 0, 0, 0, false, false, false, "P.attiva alta"},
-	{&PAtt.actual   , SettingsVals[ENABLE_UNDER_PATT_POWER]	, 0, 0, 0, 0, 0, false, false, false, "P.attiva bassa"},
+	{&Current.actual, &SettingsVals[OVER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, false, false, false, "Corrente alta"},
+	{&Current.actual, &SettingsVals[UNDER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, false, false, false, "Corrente bassa"},
+	{&PAtt.actual   , &SettingsVals[ENABLE_OVER_PATT_POWER]	, 0, 0, 0, 0, 0, false, false, false, "P.attiva alta"},
+	{&PAtt.actual   , &SettingsVals[ENABLE_UNDER_PATT_POWER]	, 0, 0, 0, 0, 0, false, false, false, "P.attiva bassa"},
 };
 
 Chrono DelayAlarm[MAX_ALARMS];
 
 void CheckAlarms()
 {
-	if(*(double*)AlarmsTab[OVER_CURRENT_ALARM].alarmMeasure > (double)AlarmsTab[OVER_CURRENT_ALARM].threshold && AlarmsTab[OVER_CURRENT_ALARM].isEnabled)
+	if((*AlarmsTab[OVER_CURRENT_ALARM].alarmMeasure > (double)*AlarmsTab[OVER_CURRENT_ALARM].threshold) && AlarmsTab[OVER_CURRENT_ALARM].isEnabled)
 	{
+		// DBG("Alarm: " + String(*AlarmsTab[OVER_CURRENT_ALARM].threshold));
 		if(!AlarmsTab[OVER_CURRENT_ALARM].isActive && DelayAlarm[OVER_CURRENT_ALARM].hasPassed(ALARM_DELAY))
 		{
 			AlarmsTab[OVER_CURRENT_ALARM].isActive = true;
@@ -38,7 +39,7 @@ void CheckAlarms()
 		DelayAlarm[OVER_CURRENT_ALARM].restart();
 	}
 	
-	if(*(double*)AlarmsTab[UNDER_CURRENT_ALARM].alarmMeasure < (double)AlarmsTab[UNDER_CURRENT_ALARM].threshold && AlarmsTab[UNDER_CURRENT_ALARM].isEnabled)
+	if(*AlarmsTab[UNDER_CURRENT_ALARM].alarmMeasure < (double)*AlarmsTab[UNDER_CURRENT_ALARM].threshold && AlarmsTab[UNDER_CURRENT_ALARM].isEnabled)
 	{
 		if(!AlarmsTab[UNDER_CURRENT_ALARM].isActive && DelayAlarm[UNDER_CURRENT_ALARM].hasPassed(ALARM_DELAY))
 		{
@@ -57,7 +58,7 @@ void CheckAlarms()
 		DelayAlarm[UNDER_CURRENT_ALARM].restart();
 	}
 	
-	if(*(double*)AlarmsTab[OVER_PATT_ALARM].alarmMeasure > (double)AlarmsTab[OVER_PATT_ALARM].threshold && AlarmsTab[OVER_PATT_ALARM].isEnabled)
+	if(*AlarmsTab[OVER_PATT_ALARM].alarmMeasure > (double)*AlarmsTab[OVER_PATT_ALARM].threshold && AlarmsTab[OVER_PATT_ALARM].isEnabled)
 	{
 		if(!AlarmsTab[OVER_PATT_ALARM].isActive && DelayAlarm[OVER_PATT_ALARM].hasPassed(ALARM_DELAY))
 		{
@@ -75,7 +76,7 @@ void CheckAlarms()
 		DelayAlarm[OVER_PATT_ALARM].restart();
 	}
 	
-	if(*(double*)AlarmsTab[UNDER_PATT_ALARM].alarmMeasure < (double)AlarmsTab[UNDER_PATT_ALARM].threshold && AlarmsTab[UNDER_PATT_ALARM].isEnabled)
+	if(*AlarmsTab[UNDER_PATT_ALARM].alarmMeasure < (double)*AlarmsTab[UNDER_PATT_ALARM].threshold && AlarmsTab[UNDER_PATT_ALARM].isEnabled)
 	{
 		if(!AlarmsTab[UNDER_PATT_ALARM].isActive && DelayAlarm[UNDER_PATT_ALARM].hasPassed(ALARM_DELAY))
 		{

@@ -18,8 +18,12 @@
 #define PF_INVALID 2.0
 #define TO_ADC_VAL(volt)   (volt * 4096 / 3.3)
 
-#define CURRENT_BIAS 	1.915
+#define CURRENT_BIAS 	1.297
 #define VOLTAGE_BIAS 	1.704
+
+#define TARP_I			0.05
+#define TARP_V			200.0
+
 
 typedef struct
 {

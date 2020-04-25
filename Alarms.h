@@ -6,7 +6,7 @@
 typedef struct
 {
 	double *alarmMeasure;
-	int32_t threshold;
+	int32_t *threshold;
 	uint8_t alarmHour;
 	uint8_t alarmMinute;
 	uint8_t alarmDay;

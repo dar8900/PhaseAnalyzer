@@ -2141,7 +2141,7 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 	DrawNavButtons(DRAW_OK);	
 	if(isSwitch)
 	{
-		EnumItem = 0;
+		EnumItem = 2;
 		MaxEnum = 2;
 	}
 	else
@@ -2228,7 +2228,7 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 						*(uint8_t *)AlarmSwitchdEnum[EnumItem].enumValuePtr = (uint8_t)EnumItem;
 						DrawPopUp("Allarme impostato", 1000);
 						Switch.haveAlarm = true;
-						Switch.alarmShutDown = true;
+						// Switch.alarmShutDown = true;
 					}
 					else
 					{
