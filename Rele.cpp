@@ -50,6 +50,10 @@ void RefreshSwitchStatus()
 				Switch.timerDuration = 0;
 				Switch.alarmShutDown = true;
 			}
+			else
+			{
+				Switch.alarmShutDown = false;
+			}
 		}
 		else
 		{

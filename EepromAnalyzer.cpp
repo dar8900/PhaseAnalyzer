@@ -164,10 +164,15 @@ bool ReadResetDflt()
 
 void WriteSwitchStatistics(bool IsAReset)
 {
-	if(WriteSwitchStatisticsTimer.hasPassed(900, true) || IsAReset)
+	if(WriteSwitchStatisticsTimer.hasPassed(900, true))
 	{
 		EEPROM.put(SWITCH_STATISTICS_START_ADDR, Switch.powerOnTime);
 		EEPROM.put(SWITCH_STATISTICS_START_ADDR + 4, Switch.nSwitch);
+	}
+	if(IsAReset)
+	{
+		EEPROM.put(SWITCH_STATISTICS_START_ADDR, Switch.powerOnTime);
+		EEPROM.put(SWITCH_STATISTICS_START_ADDR + 4, Switch.nSwitch);		
 	}
 }
 

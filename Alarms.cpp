@@ -9,10 +9,10 @@
 
 ALARM_DEF AlarmsTab[MAX_ALARMS] = 
 {
-	{&Current.actual, &SettingsVals[OVER_CURRENT_VALUE]			, 0, 0, 0, 0, 0, false, false, false, "Corrente alta"},
-	{&Current.actual, &SettingsVals[UNDER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, false, false, false, "Corrente bassa"},
-	{&PApp.actual   , &SettingsVals[ENABLE_OVER_PAPP_POWER]		, 0, 0, 0, 0, 0, false, false, false, "P.apparente alta"},
-	{&PApp.actual   , &SettingsVals[ENABLE_UNDER_PAPP_POWER]	, 0, 0, 0, 0, 0, false, false, false, "P.apparente bassa"},
+	{&Current.actual, &SettingsVals[OVER_CURRENT_VALUE]			, 0, 0, 0, 0, 0, 0, false, false, false, "Corrente alta"},
+	{&Current.actual, &SettingsVals[UNDER_CURRENT_VALUE]		, 0, 0, 0, 0, 0, 0, false, false, false, "Corrente bassa"},
+	{&PApp.actual   , &SettingsVals[ENABLE_OVER_PAPP_POWER]		, 0, 0, 0, 0, 0, 0, false, false, false, "P.apparente alta"},
+	{&PApp.actual   , &SettingsVals[ENABLE_UNDER_PAPP_POWER]	, 0, 0, 0, 0, 0, 0, false, false, false, "P.apparente bassa"},
 };
 
 Chrono DelayAlarm[MAX_ALARMS];
@@ -30,6 +30,7 @@ void CheckAlarms()
 			AlarmsTab[OVER_CURRENT_ALARM].alarmDay = Time.day;
 			AlarmsTab[OVER_CURRENT_ALARM].alarmMonth = Time.month;
 			AlarmsTab[OVER_CURRENT_ALARM].alarmYear = Time.year % 100;
+			AlarmsTab[OVER_CURRENT_ALARM].nOccurence++;
 		}
 
 	}
@@ -49,6 +50,7 @@ void CheckAlarms()
 			AlarmsTab[UNDER_CURRENT_ALARM].alarmDay = Time.day;
 			AlarmsTab[UNDER_CURRENT_ALARM].alarmMonth = Time.month;
 			AlarmsTab[UNDER_CURRENT_ALARM].alarmYear = Time.year % 100;
+			AlarmsTab[UNDER_CURRENT_ALARM].nOccurence++;
 		}
 
 	}
@@ -68,6 +70,7 @@ void CheckAlarms()
 			AlarmsTab[OVER_PAPP_ALARM].alarmDay = Time.day;
 			AlarmsTab[OVER_PAPP_ALARM].alarmMonth = Time.month;
 			AlarmsTab[OVER_PAPP_ALARM].alarmYear = Time.year % 100;
+			AlarmsTab[OVER_PAPP_ALARM].nOccurence++;
 		}
 	}
 	else
@@ -86,6 +89,7 @@ void CheckAlarms()
 			AlarmsTab[UNDER_PAPP_ALARM].alarmDay = Time.day;
 			AlarmsTab[UNDER_PAPP_ALARM].alarmMonth = Time.month;
 			AlarmsTab[UNDER_PAPP_ALARM].alarmYear = Time.year % 100;
+			AlarmsTab[UNDER_PAPP_ALARM].nOccurence++;
 		}
 	}
 	else

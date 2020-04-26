@@ -190,8 +190,8 @@ const char *AlarmsTitle[MAX_ALARMS] =
 {
 	"Sovra corrente",
 	"Sotto corrente",
-	"Sovra potenza att.",
-	"Sotto potenza att.",
+	"Sovra potenza app.",
+	"Sotto potenza app.",
 };
 
 const char *ReleTitle[MAX_RELE_ITEM] = 
@@ -946,16 +946,17 @@ static void DrawGraph()
 		{
 			// CURRENT
 			if(CurrentGraphicCopy[i] > 0)
-				y = GRAPHIC_HALF - (CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
 			else
-				y = GRAPHIC_HALF - ((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI);
+				y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
 			
 			// VOLTAGE
 			if(VoltageGraphicCopy[i] > 0)
-				y = GRAPHIC_HALF - ((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
 			else
-				y = GRAPHIC_HALF - (VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV);
+				y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
+			y -= 20;
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}
@@ -1384,7 +1385,7 @@ static void ViewDetailAlarm(uint8_t AlarmIndex)
 {
 	bool ExitAlarmsView = false;
 	uint8_t KeyPress = MAX_KEY;
-	String AlarmTime = "";
+	String AlarmTime = "", NOccur = "";
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
@@ -1412,22 +1413,34 @@ static void ViewDetailAlarm(uint8_t AlarmIndex)
 			{
 				Display.setCursor(CENTER_ALIGN("ATTIVO"), MENU_TITLE_POS + 105);
 				Display.print("ATTIVO");
+			}
+			else
+			{
+				Display.setCursor(CENTER_ALIGN("NON ATTIVO"), MENU_TITLE_POS + 105);
+				Display.print("NON ATTIVO");				
+			}
+			if(AlarmsTab[AlarmIndex].nOccurence > 0)
+			{
 				AlarmTime = (AlarmsTab[AlarmIndex].alarmHour < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmHour) : String(AlarmsTab[AlarmIndex].alarmHour));
 				AlarmTime += ":" + (AlarmsTab[AlarmIndex].alarmMinute < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmMinute) : String(AlarmsTab[AlarmIndex].alarmMinute));
 				AlarmTime += "  " + (AlarmsTab[AlarmIndex].alarmDay < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmDay) : String(AlarmsTab[AlarmIndex].alarmDay));
 				AlarmTime += "/" + (AlarmsTab[AlarmIndex].alarmMonth < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmMonth) : String(AlarmsTab[AlarmIndex].alarmMonth));
 				AlarmTime += "/" + (AlarmsTab[AlarmIndex].alarmYear < 10 ? "0" + String(AlarmsTab[AlarmIndex].alarmYear) : String(AlarmsTab[AlarmIndex].alarmYear));
 
-				// AlarmTime = String(AlarmsTab[AlarmIndex].alarmHour) + ":" + String(AlarmsTab[AlarmIndex].alarmMinute);
-				// AlarmTime +=  " " + String(AlarmsTab[AlarmIndex].alarmDay) + "/" + String(AlarmsTab[AlarmIndex].alarmMonth) + "/" + String(AlarmsTab[AlarmIndex].alarmYear);
 				Display.setCursor(CENTER_ALIGN(AlarmTime.c_str()), MENU_TITLE_POS + 135);
 				Display.print(AlarmTime.c_str());	
+
+				NOccur = "Occorrenze: " + String(AlarmsTab[AlarmIndex].nOccurence);
+				Display.setCursor(CENTER_ALIGN(NOccur.c_str()), MENU_TITLE_POS + 165);
+				Display.print(NOccur.c_str());
 			}
-			else
-			{
-				Display.setCursor(CENTER_ALIGN(" NON ATTIVO"), MENU_TITLE_POS + 105);
-				Display.print("NON ATTIVO");					
-			}
+
+			// }
+			// else
+			// {
+			// 	Display.setCursor(CENTER_ALIGN(" NON ATTIVO"), MENU_TITLE_POS + 105);
+			// 	Display.print("NON ATTIVO");					
+			// }
 		}
 		else
 		{
@@ -1595,7 +1608,7 @@ static void SetAndShowSwitchStatus()
 			case OK:	
 				if(SwitchStatus)
 				{
-					if(Switch.alarmShutDown)
+					if(AlarmPresence())
 						DrawInfoPopUp("Allarme attivo", 1000);
 					else
 						Switch.isActive = SwitchStatus;
@@ -2076,7 +2089,7 @@ static void ChangeValue(uint8_t SettingIndex)
 			DrawNavButtons(DRAW_OK);
 		}
 		Display.setTextColor(ILI9341_WHITE);
-		Display.setFont(Arial_24_Bold);
+		Display.setFont(Arial_18_Bold);
 		Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
 		Display.print(Settings[SettingIndex].settingName);
 		Display.setFont(Arial_32_Bold);
@@ -2167,12 +2180,12 @@ void ChangeEnum(uint8_t SettingIndex, bool isSwitch)
 		if(!isSwitch)
 		{
 			Display.setTextColor(ILI9341_WHITE);
-			Display.setFont(Arial_24_Bold);
+			Display.setFont(Arial_20_Bold);
 			Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].settingName), MENU_TITLE_POS);
 			Display.print(Settings[SettingIndex].settingName);
-			Display.setFont(Arial_28_Bold);
-			if(TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) > DISPLAY_WIDTH - 40)
-				Display.setFont(Arial_16_Bold);
+			// Display.setFont(Arial_28_Bold);
+			// if(TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName) > DISPLAY_WIDTH - 40)
+			Display.setFont(Arial_18_Bold);
 			Display.setCursor(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName), CENTER_POS);
 			Display.print(Settings[SettingIndex].enumPtr[EnumItem].enumName);
 			Display.drawRoundRect(CENTER_ALIGN(Settings[SettingIndex].enumPtr[EnumItem].enumName) - 2 + (BoxPos * TEXT_LENGHT(Settings[SettingIndex].enumPtr[EnumItem].enumName)), 

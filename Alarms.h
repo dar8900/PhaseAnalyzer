@@ -12,6 +12,7 @@ typedef struct
 	uint8_t alarmDay;
 	uint8_t alarmMonth;
 	uint8_t alarmYear;
+	uint16_t nOccurence;
 	bool    isEnabled;
 	bool 	isActive;
 	bool 	isNotified;

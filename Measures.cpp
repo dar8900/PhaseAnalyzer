@@ -131,6 +131,7 @@ void AnalogInit()
 	PRea.min = 3680.0;
 	PApp.min = 3680.0;
 	Pf.min = 1.000;
+	Pf.max = PF_INVALID;
 }
 
 
@@ -143,6 +144,19 @@ static void CalcMaxMin(MEASURES_VAR *Measure)
 		Measure->max = Measure->actual;
 	if(Measure->min > Measure->actual || (int32_t)(Measure->min * 100) == 0)
 		Measure->min = Measure->actual;
+}
+
+static void CalcMaxMinPf()
+{
+	if((int32_t)Pf.actual != (int32_t)PF_INVALID)
+	{
+		if((int32_t)Pf.max == (int32_t)PF_INVALID)
+			Pf.max = 0.0;
+		if(Pf.max < Pf.actual) 
+			Pf.max = Pf.actual;
+	}
+	if(Pf.min > Pf.actual || (int32_t)(Pf.min * 100) == 0)
+		Pf.min = Pf.actual;	
 }
 
 static void CalcMaxAvg(MEASURES_VAR *Measure)
@@ -299,7 +313,9 @@ void GetMeasure()
 
 	PApp.actual = Current.actual * Voltage.actual;
 	if((int64_t)PApp.actual != 0)
+	{
 		Pf.actual = PAtt.actual / PApp.actual;
+	}
 	else 
 		InvalidPf = true;
 	if(InvalidPf || isnan(Pf.actual))
@@ -314,13 +330,14 @@ void GetMeasure()
 	{
 		CalcMaxMin(&Current);
 		CalcMaxMin(&Voltage);
-		CalcMaxMin(&Pf);
+		// CalcMaxMin(&Pf);
+		CalcMaxMinPf();
 		CalcMaxMin(&PAtt);
 		CalcMaxMin(&PRea);
 		CalcMaxMin(&PApp);
 		CalcEnergy();
+		CalcAvg();
 	}
-	CalcAvg();
 	CalcMaxAvg(&Current);
 	CalcMaxAvg(&Voltage);
 	CalcMaxAvg(&Pf);
