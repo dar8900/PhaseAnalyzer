@@ -19,6 +19,8 @@ void setup()
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
 	RtcInit();
+	if(!Time.rtcStarted && Time.rtcConnected)
+		AnalyzerPage = SET_TIME_DATE;
 	InitMemory();
 	SwitchInit();
 	BtInit();
@@ -60,6 +62,12 @@ void loop()
 			break;	
 		case RELE:
 			DrawRelePage();
+			break;
+		case SET_TIME_DATE:
+			ChangeTimeDate(true, false);
+			ChangeTimeDate(false, false);
+			Time.rtcStarted = true;
+			AnalyzerPage = MAIN_MENU;
 			break;
 		default:
 			break;

@@ -1,6 +1,7 @@
 #include "PhaseAnalyzer.h"
 #include "Time.h"
 
+
 #define DFLT_HOUR  		0
 #define DFLT_MINUTE 	0
 #define DFLT_DAY  		1
@@ -35,17 +36,34 @@ void RtcInit()
 	if (! rtc.begin()) 
 	{
 		Serial.println("Rtc no started");
+		Time.rtcConnected = false;
 		Time.rtcStarted = false;
 	}
 	else
-		Time.rtcStarted = true;
-	if(Time.rtcStarted)
+		Time.rtcConnected = true;
+	if(Time.rtcConnected)
 	{
 		if (! rtc.isrunning())
 		{
-			rtc.adjust(DateTime(DFLT_YEAR, DFLT_MONTH, DFLT_DAY, DFLT_HOUR, DFLT_MINUTE, 0)); 
+			rtc.adjust(DateTime(DFLT_YEAR, DFLT_MONTH, DFLT_DAY, DFLT_HOUR, DFLT_MINUTE, 0));
+			Time.rtcStarted = false;
 		}
+		else
+			Time.rtcStarted = true;
 	}
+}
+
+String TimeStamp2String(uint32_t TimeStamp)
+{
+	String TimeString = "";
+	DateTime TimeRaw(TimeStamp);				
+	TimeString = (TimeRaw.hour() < 10 ? "0" + String(TimeRaw.hour()) : String(TimeRaw.hour()));
+	TimeString += ":" + (TimeRaw.minute() < 10 ? "0" + String(TimeRaw.minute()) : String(TimeRaw.minute()));
+	TimeString += ":" + (TimeRaw.second() < 10 ? "0" + String(TimeRaw.second()) : String(TimeRaw.second()));
+	TimeString += "  " + (TimeRaw.day() < 10 ? "0" + String(TimeRaw.day()) : String(TimeRaw.day()));
+	TimeString += "/" + (TimeRaw.month() < 10 ? "0" + String(TimeRaw.month()) : String(TimeRaw.month()));
+	TimeString += "/" + String(TimeRaw.year() % 100);
+	return TimeString;
 }
 
 void GetTime()
@@ -53,6 +71,7 @@ void GetTime()
 	if(Time.rtcStarted)
 	{
 		RtcTimeDate = rtc.now();
+		Time.timeInUnixTime = RtcTimeDate.unixtime();
 		Time.hour = RtcTimeDate.hour();
 		Time.minute = RtcTimeDate.minute();
 		Time.second = RtcTimeDate.second();

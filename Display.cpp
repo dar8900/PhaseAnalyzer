@@ -8,6 +8,7 @@
 #include "Logs.h"
 #include "Rele.h"
 #include "BT.h"
+// #include "doom_bmp.h"
 
 #define DRAW_OK		false
 #define DRAW_BACK	true
@@ -239,7 +240,11 @@ void DoTasks()
 {
 	GetMeasure();	
 	if(TimeRefresh.hasPassed(1000, true))
+	{
+		if(Time.liveCnt == UINT32_MAX)
+			Time.liveCnt = 0;
 		Time.liveCnt++;
+	}
 	CheckAlarms();
 	LogMeasure();
 	RefreshSwitchStatus();
@@ -506,6 +511,7 @@ void DisplaySetup(uint8_t Rotation)
 	Touch.begin();
 	DisplaySetRotation(Rotation);
 	DisplayParam.displayRotation = Rotation;
+	// Display.writeRect(0, 0, start_screen.width, start_screen.height, (uint16_t*)(start_screen.pixel_data));
 }
 
 
@@ -1027,13 +1033,14 @@ static void FillLogList()
 	{
 		if(LogBufferReordered[i].timeStamp != 0)
 		{
-			DateTime LogTime(LogBufferReordered[i].timeStamp);				
-			LogList[MAX_LOGS - 1 - i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
-			LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
-			LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.second() < 10 ? "0" + String(LogTime.second()) : String(LogTime.second()));
-			LogList[MAX_LOGS - 1 - i] += "  " + (LogTime.day() < 10 ? "0" + String(LogTime.day()) : String(LogTime.day()));
-			LogList[MAX_LOGS - 1 - i] += "/" + (LogTime.month() < 10 ? "0" + String(LogTime.month()) : String(LogTime.month()));
-			LogList[MAX_LOGS - 1 - i] += "/" + String(LogTime.year() % 100);
+			LogList[MAX_LOGS - 1 - i] = TimeStamp2String(LogBufferReordered[i].timeStamp);
+			// DateTime LogTime(LogBufferReordered[i].timeStamp);				
+			// LogList[MAX_LOGS - 1 - i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
+			// LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
+			// LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.second() < 10 ? "0" + String(LogTime.second()) : String(LogTime.second()));
+			// LogList[MAX_LOGS - 1 - i] += "  " + (LogTime.day() < 10 ? "0" + String(LogTime.day()) : String(LogTime.day()));
+			// LogList[MAX_LOGS - 1 - i] += "/" + (LogTime.month() < 10 ? "0" + String(LogTime.month()) : String(LogTime.month()));
+			// LogList[MAX_LOGS - 1 - i] += "/" + String(LogTime.year() % 100);
 			LogList[MAX_LOGS - 1 - i] += " " + String(LogBufferReordered[i].logMeasure, 3);
 			switch(MeasureToLog)
 			{
@@ -1184,10 +1191,11 @@ void DrawLogsList()
 	}
 }
 
-static void DrawGraphLog(LOGS_DEF *LogBufferLocal)
+static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t CursorPos)
 {
-	int32_t y = 0, y_old = 0, MaxVal = 0;
+	int32_t y = 0, y_old = 0, MaxVal = 0, y_cursor = 0;
 	int LogBufferIndex = 0;
+	CursorPos /= 2;
 	Display.drawRoundRect(LOG_GRAPHIC_X, LOG_GRAPHIC_Y, LOG_GRAPHIC_W, LOG_GRAPHIC_H, 1, ILI9341_WHITE);
 	Display.drawFastVLine(LOG_GRAPHIC_X + (LOG_GRAPHIC_W / 2), LOG_GRAPHIC_Y, LOG_GRAPHIC_H, ILI9341_DARKGREY);
 	Display.drawFastHLine(LOG_GRAPHIC_X , LOG_GRAPHIC_HALF, LOG_GRAPHIC_W, ILI9341_DARKGREY);
@@ -1218,14 +1226,72 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal)
 				Display.drawFastVLine(LOG_GRAPHIC_X + i, y_old, y - y_old, ILI9341_YELLOW);
 			y_old = y;
 		}
-	}		
+		if(CursorOn)
+		{
+			y_cursor = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+			Display.drawFastHLine(CursorPos - 5, y_cursor, 10, ILI9341_RED);
+			Display.drawFastVLine(CursorPos, y_cursor - 5, 10, ILI9341_RED);
+		}
+	}	
+	if(CursorOn)
+	{
+		String LogMeasStr = "";
+		if(LogBufferLocal[MAX_LOGS - 1 - CursorPos].timeStamp != 0)
+		{
+			LogMeasStr = "Misura: ";
+			LogMeasStr += String(LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure, 3);
+			switch(MeasureToLog)
+			{
+				case CURRENT_LOG:
+					LogMeasStr += "A";
+					break;
+				case VOLTAGE_LOG:
+					LogMeasStr += "V";
+					break;
+				case P_ATT_LOG:
+					LogMeasStr += "W";
+					break;
+				case PREA_LOG:
+					LogMeasStr += "VAr";
+					break;
+				case P_APP_LOG:
+					LogMeasStr += "VA";
+					break;
+				case PF_LOG:
+					LogMeasStr += "";
+					break;
+				default:
+					break;
+			}
+			Display.setFont(Arial_20);
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 20);
+			Display.print(LogMeasStr.c_str());	
+			LogMeasStr = "Data: ";
+			LogMeasStr += TimeStamp2String(LogBufferLocal[MAX_LOGS - 1 - CursorPos].timeStamp);
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 60);
+			Display.print(LogMeasStr.c_str());	
+		}
+		else		
+		{
+			Display.setFont(Arial_20);
+			Display.setTextColor(ILI9341_WHITE);
+			LogMeasStr = "Misura: ----";
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 20);
+			Display.print(LogMeasStr.c_str());	
+			LogMeasStr = "Data: --:-- --/--/--";
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 60);
+			Display.print(LogMeasStr.c_str());				
+		}
+	}
 
 }
 
 void DrawLogGraphic()
 {
-	bool ExitGraphics = false;
+	bool ExitGraphics = false, CursorOn = false;
 	uint8_t KeyPress = MAX_KEY;
+	uint16_t CursorPos = 0;
 	if(LastLogIndex != 0)
 	{
 		ClearDisplay(false);
@@ -1254,15 +1320,24 @@ void DrawLogGraphic()
 			{
 				LogBufferReordered[MAX_LOGS - 1 - LastLogIndex + i] = LogBuffer[i];
 			}
-			DrawGraphLog(LogBufferReordered);
+			DrawGraphLog(LogBufferReordered, CursorOn, CursorPos);
 			KeyPress = ButtonPressed();
 			switch(KeyPress)
 			{
 				case UP:	
+					if(CursorPos > 0)
+						CursorPos--;
+					else
+						CursorPos = LOG_GRAPHIC_W - 1;
 					break;
-				case DOWN:			
+				case DOWN:	
+					if(CursorPos < LOG_GRAPHIC_W - 1)
+						CursorPos++;
+					else
+						CursorPos = 0;
 					break;
 				case OK:	
+					CursorOn = !CursorOn;
 					break;
 				case BACK:
 					AnalyzerPage = LOGS;

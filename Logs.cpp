@@ -8,6 +8,7 @@
 #undef WRITE_IN_EEPROM	
 
 LOGS_DEF LogBuffer[MAX_LOGS];
+DAILY_ENERGIES_T DailyEnergies;
 uint16_t LastLogIndex;
 uint8_t MeasureToLog;
 bool EnableLog;
@@ -98,5 +99,58 @@ void LogMeasure()
 	else
 	{
 		LogTimer.restart();
+	}
+}
+
+void SaveDailyEnergies()
+{
+	if(Time.rtcStarted)
+	{
+		
+	}
+}
+
+void ReadDailyEnergies()
+{
+	uint16_t DaysJumped = 0;
+	if(Time.rtcStarted)
+	{
+		EEPROM.get(DAILY_ENERGIES_ADDR, DailyEnergies);
+		if(DailyEnergies.lastDailyEnergyIndex != 0)
+		{
+			DaysJumped = (Time.timeInUnixTime - DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex - 1]) / 86400;
+			if(DaysJumped != 0)
+			{
+				if(DailyEnergies.lastDailyEnergyIndex + DaysJumped < MAX_DAILY_ENERGIES)
+				{
+					DailyEnergies.lastDailyEnergyIndex += DaysJumped;
+					for(int i = 0; i < DaysJumped; i++)
+						DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex + i] = 0;
+				}
+				else
+				{
+					memset(DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
+					EEPROM.put(DAILY_ENERGIES_ADDR, DailyEnergies);
+				}
+			}
+		}
+		else
+		{
+			DaysJumped = (Time.timeInUnixTime - DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex]) / 86400;
+			if(DaysJumped != 0)
+			{
+				if(DailyEnergies.lastDailyEnergyIndex + DaysJumped + 1 < MAX_DAILY_ENERGIES)
+				{
+					DailyEnergies.lastDailyEnergyIndex += (DaysJumped + 1);
+					for(int i = 0; i < DaysJumped; i++)
+						DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex + 1 + i] = 0;
+				}
+				else
+				{
+					memset(DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
+					EEPROM.put(DAILY_ENERGIES_ADDR, DailyEnergies);
+				}
+			}			
+		}
 	}
 }

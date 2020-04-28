@@ -4,6 +4,15 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
+#define MAX_SETTINGS_MEMORY 				256	 // Max 64 settaggi
+#define SETTINGS_START_ADDR	    			  0
+#define SETTINGS_CHECKSUM_ADDR				513  // +4 bytes -> 517
+
+#define SWITCH_STATISTICS_START_ADDR		260  // +6 bytes -> 266
+			
+#define RESET_DFLT_ADDR						550 // +1 bytes -> 551
+
+
 bool InitMemory();
 bool SettingToDefault();
 void WriteSetting(uint8_t SettingsIndex, int32_t NewVal);

@@ -4,16 +4,6 @@
 #include "Display.h"
 #include "Rele.h"
 
-#define MAX_SETTINGS_MEMORY 				256	 // Max 64 settaggi
-#define SETTINGS_START_ADDR	    			  0
-#define SETTINGS_CHECKSUM_ADDR				513  // +4 bytes -> 517
-
-#define SWITCH_STATISTICS_START_ADDR		260  // +6 bytes -> 266
-
-#define ENERGIES_ADDR						270 // +24 bytes -> 294
-			
-#define RESET_DFLT_ADDR						550 // +1 bytes -> 551
-
 
 Chrono WriteSwitchStatisticsTimer(Chrono::SECONDS);
 
@@ -72,6 +62,7 @@ void WriteSetting(uint8_t SettingsIndex, int32_t NewVal)
 		else
 			CheckSum += (uint32_t)NewVal;
 	}
+	CheckSum += MAX_SETTINGS;
 	EEPROM.put(SETTINGS_CHECKSUM_ADDR, CheckSum);
 }
 
@@ -102,6 +93,7 @@ void WriteAllSettings(bool toDflt)
 		}
 		delay(1);
 	}
+	CheckSum += MAX_SETTINGS;
 	EEPROM.put(SETTINGS_CHECKSUM_ADDR, CheckSum);
 }
 
@@ -112,7 +104,8 @@ void ReadAllSettings()
 	{ 
 		EEPROM.get(i * sizeof(int32_t), SettingsVals[i]);
 		CheckSumReaded += SettingsVals[i];
-	}	
+	}
+	CheckSumReaded += MAX_SETTINGS;
 	EEPROM.get(SETTINGS_CHECKSUM_ADDR, CheckSumSaved);
 	if(CheckSumReaded != CheckSumSaved)
 	{
