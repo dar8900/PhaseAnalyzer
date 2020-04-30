@@ -25,6 +25,7 @@ void setup()
 	SwitchInit();
 	BtInit();
 	ReadAllLogs();
+	ReadDailyEnergies();
 	ReadSwitchStatistics();
 	DBG("Software started");
 }

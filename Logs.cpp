@@ -12,6 +12,7 @@ DAILY_ENERGIES_T DailyEnergies;
 uint16_t LastLogIndex;
 uint8_t MeasureToLog;
 bool EnableLog;
+bool EnableDailyEnergies;
 bool LogFull;
 Chrono LogTimer(Chrono::SECONDS);
 
@@ -104,16 +105,40 @@ void LogMeasure()
 
 void SaveDailyEnergies()
 {
-	if(Time.rtcStarted)
+	double DailyEnAppCopy = DailyEnApp;
+	if(Time.rtcStarted && EnableDailyEnergies)
 	{
-		
+		if(Time.hour == 0 && Time.minute == 0 && Time.second == 0)
+		{
+			if(DailyEnergies.lastDailyEnergyIndex != 0)
+			{
+				for(int i = DailyEnergies.lastDailyEnergyIndex; i >= 0; i--)
+				{
+					if(DailyEnergies.timeStamp[i] != 0)
+					{
+						DailyEnAppCopy = DailyEnApp - DailyEnergies.dailyAppEn[i];
+						if(DailyEnAppCopy < 0)
+							DailyEnAppCopy = DailyEnApp;
+						break;
+					}
+
+				}
+			}
+			DailyEnergies.dailyAppEn[DailyEnergies.lastDailyEnergyIndex] = (float)DailyEnAppCopy;
+			DailyEnApp = 0.0;
+			DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex] = Time.timeInUnixTime;
+			EEPROM.put(DAILY_ENERGIES_ADDR + (DailyEnergies.lastDailyEnergyIndex * 4), DailyEnergies.dailyAppEn[DailyEnergies.lastDailyEnergyIndex]);
+			EEPROM.put(DAILY_EN_TIMESTMP_ADDR + (DailyEnergies.lastDailyEnergyIndex * 4), DailyEnergies.timeStamp[DailyEnergies.lastDailyEnergyIndex]);
+			DailyEnergies.lastDailyEnergyIndex++;
+			EEPROM.put(LAST_DAILY_ENERGY_INDEX_ADDR, DailyEnergies.lastDailyEnergyIndex);
+		}
 	}
 }
 
 void ReadDailyEnergies()
 {
 	uint16_t DaysJumped = 0;
-	if(Time.rtcStarted)
+	if(Time.rtcStarted && EnableDailyEnergies)
 	{
 		EEPROM.get(DAILY_ENERGIES_ADDR, DailyEnergies);
 		if(DailyEnergies.lastDailyEnergyIndex != 0)
@@ -129,7 +154,7 @@ void ReadDailyEnergies()
 				}
 				else
 				{
-					memset(DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
+					memset(&DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
 					EEPROM.put(DAILY_ENERGIES_ADDR, DailyEnergies);
 				}
 			}
@@ -147,7 +172,7 @@ void ReadDailyEnergies()
 				}
 				else
 				{
-					memset(DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
+					memset(&DailyEnergies, 0x00, sizeof(DAILY_ENERGIES_T));
 					EEPROM.put(DAILY_ENERGIES_ADDR, DailyEnergies);
 				}
 			}			

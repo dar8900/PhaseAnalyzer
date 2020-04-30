@@ -1,10 +1,11 @@
 #include "PhaseAnalyzer.h"
 #include "Measures.h"
 #include <ADC.h>
-#include <ADC_util.h>
+// #include <ADC_util.h>
 #include <IntervalTimer.h>
 #include "Settings.h"
 #include "EepromAnalyzer.h"
+#include "Logs.h"
 
 #define CURRENT_PIN	A2  // ADC1
 #define VOLTAGE_PIN	A9  // ADC0
@@ -50,6 +51,8 @@ static bool InvalidPf;
 
 static double EnAttAcc, EnReaAcc, EnAppAcc;
 static uint32_t EnAttCnt, EnReaCnt, EnAppCnt;
+
+double DailyEnApp;
 
 volatile double CurrentRawVal[N_SAMPLE], VoltageRawVal[N_SAMPLE];
 volatile uint16_t AcdBufferIndex = 0;
@@ -219,6 +222,7 @@ static void CalcEnergy()
 		EnAtt.actual += (EnAttAcc / EnAttCnt) / 3600;
 		EnRea.actual += (EnReaAcc / EnReaCnt) / 3600;
 		EnApp.actual += (EnAppAcc / EnAppCnt) / 3600;
+		DailyEnApp = EnApp.actual; 
 		EnAttAcc  = 0.0;
 		EnReaAcc  = 0.0;
 		EnAppAcc  = 0.0;

@@ -12,9 +12,10 @@
 
 #define MAX_LOGS			       (MAX_LOGS_MEMORY / LOG_SIZE)
 
-#define MAX_DAILY_ENERGIES		     30
-#define DAILY_ENERGIES_ADDR		    270 // +(30 * 8) bytes -> 510
-#define LAST_DAILY_ENERGY_INDEX	    510 // + 1 -> 511
+#define MAX_DAILY_ENERGIES		             30
+#define DAILY_ENERGIES_ADDR		            270 // +(30 * 4) bytes -> 390
+#define DAILY_EN_TIMESTMP_ADDR				390 // +(30 * 4) bytes -> 510
+#define LAST_DAILY_ENERGY_INDEX_ADDR	    510 // + 1 -> 511
 
 #pragma pack(1)
 typedef struct
@@ -46,14 +47,17 @@ typedef enum
 }LOGS_MEASURES;
 
 extern LOGS_DEF LogBuffer[];
+extern DAILY_ENERGIES_T DailyEnergies;
 extern uint16_t LastLogIndex;
 extern uint8_t MeasureToLog;
 extern bool EnableLog;
+extern bool EnableDailyEnergies;
 extern bool LogFull;
 extern const double *Measures4Log[];
 
 void LogMeasure();
 void ReadAllLogs();
 void ResetLogs();
-
+void SaveDailyEnergies();
+void ReadDailyEnergies();
 #endif

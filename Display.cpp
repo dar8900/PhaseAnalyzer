@@ -147,7 +147,7 @@ XPT2046_Touchscreen Touch(TOUCH_CS_PIN);
 ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
 DISPLAY_VAR DisplayParam;
 
-Chrono TimeRefresh, DisplayRefresh, MeasureRefresh, LogInconTimer, BtRefresh;
+Chrono TimeRefresh, DisplayRefresh, MeasureRefresh, LogInconTimer, BtRefresh, GetTimeTimer;
 static bool LogInconToggle;
 
 NAV_BUTTON_COORD Up = {NAV_BUTT_X_START, NAV_BUTT_Y_START, NAV_BUTT_WIDTH, NAV_BUTT_HIGH, ILI9341_RED};
@@ -238,15 +238,19 @@ uint8_t SearchRange(double Value2Search)
 
 void DoTasks()
 {
-	GetMeasure();	
+	GetMeasure();
+
 	if(TimeRefresh.hasPassed(1000, true))
 	{
 		if(Time.liveCnt == UINT32_MAX)
 			Time.liveCnt = 0;
 		Time.liveCnt++;
 	}
+	
 	CheckAlarms();
+
 	LogMeasure();
+
 	RefreshSwitchStatus();
 	
 	CheckBtDevConn();
@@ -257,7 +261,11 @@ void DoTasks()
 	}
 	else
 		BtRefresh.restart();
+
 	WriteSwitchStatistics(false);
+
+	if(GetTimeTimer.hasPassed(250, true))
+		GetTime();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -525,7 +533,6 @@ static void ClearMenu()
 static void DrawTopInfo()
 {
 	String Info = "";
-	GetTime();
 	Display.fillRect(0, 0, DISPLAY_WIDTH, 20, ILI9341_BLACK);
 	Display.setTextColor(ILI9341_WHITE);
 	Display.setFont(Arial_12);

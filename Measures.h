@@ -56,6 +56,8 @@ extern MEASURES_VAR EnAtt;
 extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
+extern double DailyEnApp;
+
 extern volatile double CurrentRawVal[];
 extern volatile double VoltageRawVal[];
 
