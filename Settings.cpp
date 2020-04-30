@@ -27,7 +27,8 @@ const int32_t SettingsDefVal[MAX_SETTINGS] =
 	DISABLED,               //SWITCH_ALARM_ENABLE                  // 15
 	5,						//ALARM_INSERT_DELAY                   // 16
 	1,						//AVG_TIME,                            // 17
-	DISABLED,				//SIMULATION_MODE,                     // 18
+	15,						//ENEGIES_SAVE_TIME,    	           // 18
+	DISABLED,				//SIMULATION_MODE,                     // 19
 };
 
 
@@ -101,23 +102,24 @@ const ENUM_VAL AlarmSwitchEnableEnum[2] =
 
 const SETTING_DEF Settings[MAX_SETTINGS] = 
 {
-	{&SettingsVals[CHANGE_TIME]   	        , 0			 		 , 0 						, DATE_TYPE , NULL				     , ""   , "Imposta ora"		       },
-	{&SettingsVals[CHANGE_DATE]   	        , 0			 		 , 0 						, DATE_TYPE , NULL				     , ""   , "Imposta data"		   },
-	{&SettingsVals[SET_LOG_TIME]		  	, 1			 		 , 1800 					, VALUE_TYPE, NULL				     , "s"  , "Tempo di log"		   },
-	{&SettingsVals[SET_LOG_MEASURE]		    , CURRENT_LOG		 , MAX_MEASURE_LOG - 1  	, ENUM_TYPE , LogMeasureEnum         , ""   , "Misura di log"		   },
-	{&SettingsVals[ENABLE_LOG_MEASURE]    	, DISABLED		     , ENABLED 					, ENUM_TYPE , LogEnable			     , ""   , "Abilita log"			   },
-	{&SettingsVals[ENABLE_LOG_DAILY_ENERGY] , DISABLED		     , ENABLED 					, ENUM_TYPE , DailyEnergiesLogEnable , ""   , "Abilita en.app giorn."  },
-	{&SettingsVals[OVER_CURRENT_VALUE]      , 1000		 		 , 15000		 	    	, VALUE_TYPE, NULL				     , "mA" , "Sovra corrente"		   },
-	{&SettingsVals[ENABLE_OVER_CURRENT]     , DISABLED			 , ENABLED  				, ENUM_TYPE , OverCurrentEnableEnum  , ""   , "Abilita sovra corrente" },
-	{&SettingsVals[UNDER_CURRENT_VALUE]     , 0					 , 1000  			 	   	, VALUE_TYPE, NULL				     , "mA" , "Sotto corrente"		   },
-	{&SettingsVals[ENABLE_UNDER_CURRENT]    , DISABLED			 , ENABLED  	 	    	, ENUM_TYPE , UnderCurrentEnableEnum , ""   , "Abilita sotto corrente" },
-	{&SettingsVals[OVER_APP_POWER_VALUE]    , 1000	    		 , 3500 		        	, VALUE_TYPE, NULL					 , "W"  , "Sovra potenza app."     },
-	{&SettingsVals[ENABLE_OVER_PAPP_POWER]  , DISABLED			 , ENABLED    	    		, ENUM_TYPE , OverPAppEnableEnum	 , ""   , "Abitlita sovra pot.app."},
-	{&SettingsVals[UNDER_APP_POWER_VALUE]   , 0					 , 1000 					, VALUE_TYPE, NULL					 , "W"  , "Sotto potenza app."	   },
-	{&SettingsVals[ENABLE_UNDER_PAPP_POWER] , DISABLED			 , ENABLED    				, ENUM_TYPE , UnderPAppEnabledEnum   , ""   , "Abitlita sotto pot.app."},
-	{&SettingsVals[SET_SWITCH_ALARM] 		, 0			 		 , MAX_ALARMS_SWITCH - 1	, ENUM_TYPE , AlarmSwitchdEnum       , ""   , "Scelta allarme presa"   },
-	{&SettingsVals[SWITCH_ALARM_ENABLE] 	, DISABLED			 , ENABLED    				, ENUM_TYPE , AlarmSwitchEnableEnum  , ""   , "Abilita allarme presa"  },
-	{&SettingsVals[ALARM_INSERT_DELAY]		, 1					 , 15   					, VALUE_TYPE, NULL					 , "s"  , "Tempo inser. allarme"   },
-	{&SettingsVals[AVG_TIME]				, 1					 , 30   					, VALUE_TYPE, NULL					 , "min", "Tempo di media"		   },
-	{&SettingsVals[SIMULATION_MODE]  		, DISABLED			 , ENABLED    				, ENUM_TYPE , SimulationEnabledEnum  , ""   , "Abilita simulazione"	   },
+	{&SettingsVals[CHANGE_TIME]   	        	, 0			 		 , 0 						, DATE_TYPE , NULL				     , ""   , "Imposta ora"		         },
+	{&SettingsVals[CHANGE_DATE]   	        	, 0			 		 , 0 						, DATE_TYPE , NULL				     , ""   , "Imposta data"		     },
+	{&SettingsVals[SET_LOG_TIME]		  		, 1			 		 , 1800 					, VALUE_TYPE, NULL				     , "s"  , "Tempo di log"		     },
+	{&SettingsVals[SET_LOG_MEASURE]		    	, CURRENT_LOG		 , MAX_MEASURE_LOG - 1  	, ENUM_TYPE , LogMeasureEnum         , ""   , "Misura di log"		     },
+	{&SettingsVals[ENABLE_LOG_MEASURE]    		, DISABLED		     , ENABLED 					, ENUM_TYPE , LogEnable			     , ""   , "Abilita log"			     },
+	{&SettingsVals[ENABLE_LOG_DAILY_ENERGY] 	, DISABLED		     , ENABLED 					, ENUM_TYPE , DailyEnergiesLogEnable , ""   , "Abilita en.app giorn."    },
+	{&SettingsVals[OVER_CURRENT_VALUE]      	, 1000		 		 , 15000		 	    	, VALUE_TYPE, NULL				     , "mA" , "Sovra corrente"		     },
+	{&SettingsVals[ENABLE_OVER_CURRENT]     	, DISABLED			 , ENABLED  				, ENUM_TYPE , OverCurrentEnableEnum  , ""   , "Abilita sovra corrente"   },
+	{&SettingsVals[UNDER_CURRENT_VALUE]     	, 0					 , 1000  			 	   	, VALUE_TYPE, NULL				     , "mA" , "Sotto corrente"		     },
+	{&SettingsVals[ENABLE_UNDER_CURRENT]    	, DISABLED			 , ENABLED  	 	    	, ENUM_TYPE , UnderCurrentEnableEnum , ""   , "Abilita sotto corrente"   },
+	{&SettingsVals[OVER_APP_POWER_VALUE]    	, 1000	    		 , 3500 		        	, VALUE_TYPE, NULL					 , "W"  , "Sovra potenza app."       },
+	{&SettingsVals[ENABLE_OVER_PAPP_POWER]  	, DISABLED			 , ENABLED    	    		, ENUM_TYPE , OverPAppEnableEnum	 , ""   , "Abitlita sovra pot.app."  },
+	{&SettingsVals[UNDER_APP_POWER_VALUE]   	, 0					 , 1000 					, VALUE_TYPE, NULL					 , "W"  , "Sotto potenza app."	     },
+	{&SettingsVals[ENABLE_UNDER_PAPP_POWER] 	, DISABLED			 , ENABLED    				, ENUM_TYPE , UnderPAppEnabledEnum   , ""   , "Abitlita sotto pot.app."  },
+	{&SettingsVals[SET_SWITCH_ALARM] 			, 0			 		 , MAX_ALARMS_SWITCH - 1	, ENUM_TYPE , AlarmSwitchdEnum       , ""   , "Scelta allarme presa"     },
+	{&SettingsVals[SWITCH_ALARM_ENABLE] 		, DISABLED			 , ENABLED    				, ENUM_TYPE , AlarmSwitchEnableEnum  , ""   , "Abilita allarme presa"    },
+	{&SettingsVals[ALARM_INSERT_DELAY]			, 1					 , 15   					, VALUE_TYPE, NULL					 , "s"  , "Tempo inser. allarme"     },
+	{&SettingsVals[AVG_TIME]					, 1					 , 30   					, VALUE_TYPE, NULL					 , "min", "Tempo di media"		     },
+	{&SettingsVals[ENEGIES_SAVE_TIME]	        , 1					 , 30   					, VALUE_TYPE, NULL					 , "min", "Tempo salvataggio en."    },
+	{&SettingsVals[SIMULATION_MODE]  			, DISABLED			 , ENABLED    				, ENUM_TYPE , SimulationEnabledEnum  , ""   , "Abilita simulazione"	     },
 };

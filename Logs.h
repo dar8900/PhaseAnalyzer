@@ -13,9 +13,12 @@
 #define MAX_LOGS			       (MAX_LOGS_MEMORY / LOG_SIZE)
 
 #define MAX_DAILY_ENERGIES		             30
-#define DAILY_ENERGIES_ADDR		            270 // +(30 * 4) bytes -> 390
-#define DAILY_EN_TIMESTMP_ADDR				390 // +(30 * 4) bytes -> 510
+#define DAILY_ENERGIES_ADDR		            270 // +(30 * 4) bytes -> 389
+#define DAILY_EN_TIMESTMP_ADDR				390 // +(30 * 4) bytes -> 509
 #define LAST_DAILY_ENERGY_INDEX_ADDR	    510 // + 1 -> 511
+#define APPARENT_ENERGY_SAVE_ADDR			512 // +8 -> 519
+#define ACTIVE_ENERGY_SAVE_ADDR				520 // +8 -> 527
+#define REACTIVE_ENERGY_SAVE_ADDR			528 // +8 -> 535
 
 #pragma pack(1)
 typedef struct
@@ -58,6 +61,10 @@ extern const double *Measures4Log[];
 void LogMeasure();
 void ReadAllLogs();
 void ResetLogs();
+void SaveEnergies();
+void ResetSavedEnergies();
+void ReadSavedEnergies();
 void SaveDailyEnergies();
 void ReadDailyEnergies();
+void ResetDailyEnergies();
 #endif

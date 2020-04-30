@@ -211,7 +211,8 @@ const char *ResetsTitle[MAX_RESETS] =
 	"Medie",
 	"Energie",
 	"Log",
-	"Stat. presa",
+	"Energie giorn.",
+	"Statist. presa",
 };
 
 uint8_t SearchRange(double Value2Search)
@@ -266,6 +267,8 @@ void DoTasks()
 
 	if(GetTimeTimer.hasPassed(250, true))
 		GetTime();
+	SaveEnergies();
+	SaveDailyEnergies();
 }
 
 void DisplaySetRotation(uint8_t Rotation)
@@ -1233,12 +1236,6 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 				Display.drawFastVLine(LOG_GRAPHIC_X + i, y_old, y - y_old, ILI9341_YELLOW);
 			y_old = y;
 		}
-		if(CursorOn)
-		{
-			y_cursor = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
-			Display.drawFastHLine(CursorPos - 5, y_cursor, 10, ILI9341_RED);
-			Display.drawFastVLine(CursorPos, y_cursor - 5, 10, ILI9341_RED);
-		}
 	}	
 	if(CursorOn)
 	{
@@ -1270,26 +1267,30 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 				default:
 					break;
 			}
-			Display.setFont(Arial_20);
+			Display.setFont(Arial_12);
 			Display.setTextColor(ILI9341_WHITE);
 			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 20);
 			Display.print(LogMeasStr.c_str());	
 			LogMeasStr = "Data: ";
 			LogMeasStr += TimeStamp2String(LogBufferLocal[MAX_LOGS - 1 - CursorPos].timeStamp);
-			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 60);
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 55);
 			Display.print(LogMeasStr.c_str());	
 		}
 		else		
 		{
-			Display.setFont(Arial_20);
+			Display.setFont(Arial_12);
 			Display.setTextColor(ILI9341_WHITE);
 			LogMeasStr = "Misura: ----";
 			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 20);
 			Display.print(LogMeasStr.c_str());	
 			LogMeasStr = "Data: --:-- --/--/--";
-			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 60);
+			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 55);
 			Display.print(LogMeasStr.c_str());				
 		}
+		
+		y_cursor = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		Display.drawFastHLine((CursorPos * 2) - 5  + LOG_GRAPHIC_X, y_cursor, 10, ILI9341_RED);
+		Display.drawFastVLine((CursorPos * 2)  + LOG_GRAPHIC_X, y_cursor - 5, 10, ILI9341_RED);
 	}
 
 }
@@ -1313,7 +1314,7 @@ void DrawLogGraphic()
 			{
 				DrawTopInfo();
 				DrawNavButtons(DRAW_OK);
-				Display.fillRect(LOG_GRAPHIC_X + 1, LOG_GRAPHIC_Y + 1, LOG_GRAPHIC_W - 1, LOG_GRAPHIC_H - 1, ILI9341_BLACK);
+				Display.fillRect(0, LOG_GRAPHIC_Y + 1, LOG_GRAPHIC_W + 5 + LOG_GRAPHIC_X, DISPLAY_HIGH - LOG_GRAPHIC_Y, ILI9341_BLACK);
 			}
 			Display.setFont(Arial_24_Bold);
 			Display.setTextColor(ILI9341_WHITE);
@@ -1347,8 +1348,13 @@ void DrawLogGraphic()
 					CursorOn = !CursorOn;
 					break;
 				case BACK:
-					AnalyzerPage = LOGS;
-					ExitGraphics = true;
+					if(!CursorOn)
+					{
+						AnalyzerPage = LOGS;
+						ExitGraphics = true;
+					}
+					else
+						CursorOn = false;
 					break;
 				default:
 					break;
@@ -2378,7 +2384,7 @@ void DrawSettingPage()
 		Display.setFont(Arial_24_Bold);
 		Display.setCursor(CENTER_ALIGN("Impostazioni"), MENU_TITLE_POS);
 		Display.print("Impostazioni");
-		Display.setFont(Arial_18);
+		Display.setFont(Arial_16);
 		for(int i = 0; i < MAX_MENU_VIEW_ITEMS; i++)
 		{
 			int NewItem = TopItem + i;
@@ -2555,14 +2561,25 @@ void DrawResetPage()
 						break;
 					case RESET_ENERGIES:
 						if(ConfirmReset)
-							ResetEnergies();					
+						{
+							ResetEnergies();	
+							ResetSavedEnergies();
+						}							
 						break;
 					case RESET_LOG:
-						ResetLogs();
+						if(ConfirmReset)
+							ResetLogs();
 						break;
+					case RESET_DAILY_ENERGIES:
+						if(ConfirmReset)
+							ResetDailyEnergies();
+						break;						
 					case RESET_SWITCH_STAT:
-						ResetSwitchStatistics();
-						WriteSwitchStatistics(true);
+						if(ConfirmReset)
+						{
+							ResetSwitchStatistics();
+							WriteSwitchStatistics(true);
+						}
 						break;
 					default:
 						break;

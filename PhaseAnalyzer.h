@@ -23,7 +23,7 @@
 
 #define MIN_TO_SEC(min)			(min * 60)
 
-#define FW_VERSION	0.6
+#define FW_VERSION	0.7
 
 typedef enum
 {
@@ -115,6 +115,7 @@ typedef enum
 	RESET_AVG,
 	RESET_ENERGIES,
 	RESET_LOG,
+	RESET_DAILY_ENERGIES,
 	RESET_SWITCH_STAT,
 	MAX_RESETS
 }RESET_PAGES;

@@ -49,7 +49,10 @@ void RtcInit()
 			Time.rtcStarted = false;
 		}
 		else
+		{
 			Time.rtcStarted = true;
+			GetTime();
+		}
 	}
 }
 

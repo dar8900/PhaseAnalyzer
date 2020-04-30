@@ -16,6 +16,7 @@ void setup()
 	Serial.begin(115200);
 
 	// while(!Serial){}
+	
 	DisplaySetup(D_LANDSCAPE_2);
 	AnalogInit();
 	RtcInit();
@@ -25,6 +26,7 @@ void setup()
 	SwitchInit();
 	BtInit();
 	ReadAllLogs();
+	ReadSavedEnergies();
 	ReadDailyEnergies();
 	ReadSwitchStatistics();
 	DBG("Software started");
@@ -68,6 +70,7 @@ void loop()
 			ChangeTimeDate(true, false);
 			ChangeTimeDate(false, false);
 			Time.rtcStarted = true;
+			ReadDailyEnergies();
 			AnalyzerPage = MAIN_MENU;
 			break;
 		default:
