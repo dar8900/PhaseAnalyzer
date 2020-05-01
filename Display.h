@@ -53,6 +53,12 @@
 #define LOG_GRAPHIC_H			90
 #define LOG_GRAPHIC_HALF		(LOG_GRAPHIC_Y + (LOG_GRAPHIC_H / 2))
 
+#define DAILY_HYSTO_Y			(MENU_TITLE_POS + 50)
+#define DAILY_HYSTO_W			256 
+#define DAILY_HYSTO_X			((DISPLAY_WIDTH - 40 - DAILY_HYSTO_W) / 2)
+#define DAILY_HYSTO_H			100
+#define DAILY_HYSTO_HALF		(DAILY_HYSTO_Y + (DAILY_HYSTO_H / 2))
+
 // // Color definitions
 // #define ILI9341_BLACK       0x0000      /*   0,   0,   0 */
 // #define ILI9341_NAVY        0x000F      /*   0,   0, 128 */
@@ -114,6 +120,14 @@ typedef enum
 	T_MAX_ROTATION
 }TOUCH_ROTATIONS;
 
+typedef enum
+{
+	TO_TOP = 0,
+	TO_RIGHT,
+	TO_DOWN,
+	TO_LEFT
+}ARROW_DIR;
+
 typedef struct
 {
 	TS_Point touchCoord;
@@ -151,6 +165,7 @@ void DrawMeasurePage();
 void DrawGraphicsPage();
 void DrawLogsList();
 void DrawLogGraphic();
+void DrawDailyEnergiesHysto();
 void DrawLogMenu();
 void DrawAlarmPage();
 void DrawRelePage();

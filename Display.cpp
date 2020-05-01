@@ -184,6 +184,7 @@ const char *LogTitle[MAX_LOGS_PAGES] =
 {
 	"Lista dei log",
 	"Grafico dei log",
+	"Energie del mese",
 };
 
 
@@ -320,6 +321,31 @@ static void ClearDisplay(bool Inverse)
 		Display.fillScreen(ILI9341_WHITE);
 	else
 		Display.fillScreen(ILI9341_BLACK);
+}
+
+static void DrawArrow(uint16_t ArrowTipX, uint16_t ArrowTipY, uint8_t Direction, uint8_t Dimension, uint16_t Color)
+{
+	Display.drawPixel(ArrowTipX, ArrowTipY, Color);
+	for(int i = 1; i <= Dimension; i++)
+	{
+		switch(Direction)
+		{
+			case TO_TOP:
+				Display.drawFastHLine(ArrowTipX - i, ArrowTipY + i, (2 * i) + 1, Color);
+				break;
+			case TO_RIGHT:
+				Display.drawFastVLine(ArrowTipX - i, ArrowTipY - i, (2 * i) + 1, Color);
+				break;
+			case TO_DOWN:
+				Display.drawFastHLine(ArrowTipX - i, ArrowTipY - i, (2 * i) + 1, Color);
+				break;
+			case TO_LEFT:
+				Display.drawFastVLine(ArrowTipX + i, ArrowTipY - i, (2 * i) + 1, Color);
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 static void DrawNavButtons(bool DrawBackButt)
@@ -1043,7 +1069,7 @@ static void FillLogList()
 	{
 		if(LogBufferReordered[i].timeStamp != 0)
 		{
-			LogList[MAX_LOGS - 1 - i] = TimeStamp2String(LogBufferReordered[i].timeStamp);
+			LogList[MAX_LOGS - 1 - i] = TimeStamp2String(LogBufferReordered[i].timeStamp, BOTH);
 			// DateTime LogTime(LogBufferReordered[i].timeStamp);				
 			// LogList[MAX_LOGS - 1 - i] = (LogTime.hour() < 10 ? "0" + String(LogTime.hour()) : String(LogTime.hour()));
 			// LogList[MAX_LOGS - 1 - i] += ":" + (LogTime.minute() < 10 ? "0" + String(LogTime.minute()) : String(LogTime.minute()));
@@ -1207,7 +1233,7 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 	int LogBufferIndex = 0;
 	CursorPos /= 2;
 	Display.drawRoundRect(LOG_GRAPHIC_X, LOG_GRAPHIC_Y, LOG_GRAPHIC_W, LOG_GRAPHIC_H, 1, ILI9341_WHITE);
-	Display.drawFastVLine(LOG_GRAPHIC_X + (LOG_GRAPHIC_W / 2), LOG_GRAPHIC_Y, LOG_GRAPHIC_H, ILI9341_DARKGREY);
+	// Display.drawFastVLine(LOG_GRAPHIC_X + (LOG_GRAPHIC_W / 2), LOG_GRAPHIC_Y, LOG_GRAPHIC_H, ILI9341_DARKGREY);
 	Display.drawFastHLine(LOG_GRAPHIC_X , LOG_GRAPHIC_HALF, LOG_GRAPHIC_W, ILI9341_DARKGREY);
 
 	for(int i = 0; i < MAX_LOGS; i++)
@@ -1272,7 +1298,7 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 20);
 			Display.print(LogMeasStr.c_str());	
 			LogMeasStr = "Data: ";
-			LogMeasStr += TimeStamp2String(LogBufferLocal[MAX_LOGS - 1 - CursorPos].timeStamp);
+			LogMeasStr += TimeStamp2String(LogBufferLocal[MAX_LOGS - 1 - CursorPos].timeStamp, BOTH);
 			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 55);
 			Display.print(LogMeasStr.c_str());	
 		}
@@ -1359,12 +1385,6 @@ void DrawLogGraphic()
 				default:
 					break;
 			}
-		
-			// if(OldItem != Item)
-			// {
-				// ClearMenu();
-				// OldItem = Item;
-			// }
 		}	
 	}
 	else
@@ -1374,6 +1394,135 @@ void DrawLogGraphic()
 	}	
 }
 
+static void DrawEnegiesHysto(bool CursorOn, uint16_t CursorPos)
+{
+	int32_t MaxDailyVal = 0;
+	int32_t x_hysto = 0, y_hysto = 0, y_high = 0;
+	Display.drawRoundRect(DAILY_HYSTO_X, DAILY_HYSTO_Y, DAILY_HYSTO_W, DAILY_HYSTO_H, 1, ILI9341_WHITE);
+	// Display.drawFastHLine(DAILY_HYSTO_X , DAILY_HYSTO_HALF, DAILY_HYSTO_W, ILI9341_DARKGREY);
+	for(int i = 0; i < MAX_DAILY_ENERGIES; i++)
+	{
+		if(MaxDailyVal < (int32_t)DailyEnergies.dailyAppEn[i])
+			MaxDailyVal = (int32_t)DailyEnergies.dailyAppEn[i];
+	}
+
+	for(int i = 0; i < MAX_DAILY_ENERGIES; i++)
+	{
+		x_hysto = DAILY_HYSTO_X + (i * 8) + 5;
+		if(DailyEnergies.timeStamp[i] != 0)
+		{
+			y_high = ((DAILY_HYSTO_H - 1) * (int32_t)DailyEnergies.dailyAppEn[i]) / MaxDailyVal;
+			y_hysto = DAILY_HYSTO_Y + 1 + (DAILY_HYSTO_H - 1 - y_high);
+			Display.drawFastVLine(x_hysto, y_hysto, y_high, ILI9341_CYAN);
+			Display.drawFastVLine(x_hysto + 1, y_hysto, y_high, ILI9341_CYAN);
+			Display.drawFastVLine(x_hysto + 2, y_hysto, y_high, ILI9341_CYAN);
+		}
+		else
+		{
+			Display.setFont(Arial_8);
+			Display.setTextColor(ILI9341_RED);
+			Display.setCursor(x_hysto, DAILY_HYSTO_Y + 1 + (DAILY_HYSTO_H - 1) - 9);
+			Display.print("x");	
+		}
+	}
+	if(CursorOn)
+	{
+		String Measure_time = "";
+		uint8_t ScaleRange = SearchRange(DailyEnergies.dailyAppEn[CursorPos]);
+		DrawArrow(DAILY_HYSTO_X + (CursorPos * 8) + 6, DAILY_HYSTO_Y + DAILY_HYSTO_H + 2, TO_TOP, 3, ILI9341_GREENYELLOW);
+		if(DailyEnergies.timeStamp[CursorPos] != 0)
+		{
+			Measure_time = "Misura: ";
+			Measure_time += String(DailyEnergies.dailyAppEn[CursorPos] * RangeTab[ScaleRange].rescale, 3);
+			Measure_time += String(RangeTab[ScaleRange].odg) + "VAh";
+			Display.setFont(Arial_12);
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setCursor(CENTER_ALIGN(Measure_time.c_str()), DAILY_HYSTO_Y + DAILY_HYSTO_H + 20);
+			Display.print(Measure_time.c_str());	
+			Measure_time = "Data: ";
+			Measure_time += TimeStamp2String(DailyEnergies.timeStamp[CursorPos], ONLY_DATE);
+			Display.setCursor(CENTER_ALIGN(Measure_time.c_str()), DAILY_HYSTO_Y + DAILY_HYSTO_H + 55);
+			Display.print(Measure_time.c_str());	
+		}
+		else		
+		{
+			Display.setFont(Arial_12);
+			Display.setTextColor(ILI9341_WHITE);
+			Measure_time = "Misura: ----";
+			Display.setCursor(CENTER_ALIGN(Measure_time.c_str()), DAILY_HYSTO_Y + DAILY_HYSTO_H + 20);
+			Display.print(Measure_time.c_str());	
+			Measure_time = "Data: --:-- --/--/--";
+			Display.setCursor(CENTER_ALIGN(Measure_time.c_str()), DAILY_HYSTO_Y + DAILY_HYSTO_H + 55);
+			Display.print(Measure_time.c_str());				
+		}		
+	}
+	
+}
+
+void DrawDailyEnergiesHysto()
+{
+	bool ExitEnergiesHysto = false, CursorOn = false;
+	uint8_t KeyPress = MAX_KEY;
+	uint16_t CursorPos = 0;
+	if(DailyEnergies.lastDailyEnergyIndex != 0)
+	{
+		ClearDisplay(false);
+		DisplayRefresh.restart();
+		DrawTopInfo();
+		DrawNavButtons(DRAW_OK);	
+		while(!ExitEnergiesHysto)
+		{
+			DoTasks();
+			if(DisplayRefresh.hasPassed(500, true))
+			{
+				DrawTopInfo();
+				DrawNavButtons(DRAW_OK);
+				Display.fillRect(0, DAILY_HYSTO_Y + 1, DAILY_HYSTO_W + 5 + DAILY_HYSTO_X, DISPLAY_HIGH - DAILY_HYSTO_Y, ILI9341_BLACK);
+			}
+			Display.setFont(Arial_24_Bold);
+			Display.setTextColor(ILI9341_WHITE);
+			Display.setCursor(CENTER_ALIGN("Energie del mese"), MENU_TITLE_POS);
+			Display.print("Energie del mese");	
+			DrawEnegiesHysto(CursorOn, CursorPos);
+			KeyPress = ButtonPressed();
+			switch(KeyPress)
+			{
+				case UP:	
+					if(CursorPos > 0)
+						CursorPos--;
+					else
+						CursorPos = MAX_DAILY_ENERGIES - 1;
+					break;
+				case DOWN:	
+					if(CursorPos < MAX_DAILY_ENERGIES - 1)
+						CursorPos++;
+					else
+						CursorPos = 0;
+					break;
+				case OK:	
+					CursorOn = !CursorOn;
+					break;
+				case BACK:
+					if(!CursorOn)
+					{
+						AnalyzerPage = LOGS;
+						ExitEnergiesHysto = true;
+					}
+					else
+						CursorOn = false;
+					break;
+				default:
+					break;
+			}
+
+		}	
+	}
+	else
+	{
+		AnalyzerPage = LOGS;
+		DrawPopUp("Nessun dato", 2000);
+	}	
+}
 
 void DrawLogMenu()
 {
@@ -1438,11 +1587,21 @@ void DrawLogMenu()
 				else
 					LogMenuItem = 0;			
 				break;
-			case OK:	
-				if(LogMenuItem == LOG_LIST)
-					AnalyzerPage = LIST_LOG;
-				else
-					AnalyzerPage = GRAPHIC_LOG;
+			case OK:
+				switch(LogMenuItem)
+				{
+					case LOG_LIST:
+						AnalyzerPage = LIST_LOG;
+						break;
+					case LOG_GRAPHIC:
+						AnalyzerPage = GRAPHIC_LOG;
+						break;
+					case LOG_DAILY_ENERGIES:
+						AnalyzerPage = DAILY_ENERGIES_LOG;
+						break;
+					default:	
+						break;
+				}
 				ExitLogMenu = true;
 				ClearDisplay(false);
 				break;

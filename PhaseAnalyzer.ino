@@ -63,6 +63,9 @@ void loop()
 		case GRAPHIC_LOG:
 			DrawLogGraphic();
 			break;	
+		case DAILY_ENERGIES_LOG:
+			DrawDailyEnergiesHysto();
+			break;				
 		case RELE:
 			DrawRelePage();
 			break;

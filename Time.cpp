@@ -56,16 +56,34 @@ void RtcInit()
 	}
 }
 
-String TimeStamp2String(uint32_t TimeStamp)
+String TimeStamp2String(uint32_t TimeStamp, uint8_t WichInfo)
 {
 	String TimeString = "";
-	DateTime TimeRaw(TimeStamp);				
-	TimeString = (TimeRaw.hour() < 10 ? "0" + String(TimeRaw.hour()) : String(TimeRaw.hour()));
-	TimeString += ":" + (TimeRaw.minute() < 10 ? "0" + String(TimeRaw.minute()) : String(TimeRaw.minute()));
-	TimeString += ":" + (TimeRaw.second() < 10 ? "0" + String(TimeRaw.second()) : String(TimeRaw.second()));
-	TimeString += "  " + (TimeRaw.day() < 10 ? "0" + String(TimeRaw.day()) : String(TimeRaw.day()));
-	TimeString += "/" + (TimeRaw.month() < 10 ? "0" + String(TimeRaw.month()) : String(TimeRaw.month()));
-	TimeString += "/" + String(TimeRaw.year() % 100);
+	DateTime TimeRaw(TimeStamp);
+	switch(WichInfo)
+	{
+		case ONLY_TIME:
+			TimeString = (TimeRaw.hour() < 10 ? "0" + String(TimeRaw.hour()) : String(TimeRaw.hour()));
+			TimeString += ":" + (TimeRaw.minute() < 10 ? "0" + String(TimeRaw.minute()) : String(TimeRaw.minute()));
+			TimeString += ":" + (TimeRaw.second() < 10 ? "0" + String(TimeRaw.second()) : String(TimeRaw.second()));			
+			break;
+		case ONLY_DATE:
+			TimeString = (TimeRaw.day() < 10 ? "0" + String(TimeRaw.day()) : String(TimeRaw.day()));
+			TimeString += "/" + (TimeRaw.month() < 10 ? "0" + String(TimeRaw.month()) : String(TimeRaw.month()));
+			TimeString += "/" + String(TimeRaw.year() % 100);		
+			break;
+		case BOTH:
+			TimeString = (TimeRaw.hour() < 10 ? "0" + String(TimeRaw.hour()) : String(TimeRaw.hour()));
+			TimeString += ":" + (TimeRaw.minute() < 10 ? "0" + String(TimeRaw.minute()) : String(TimeRaw.minute()));
+			TimeString += ":" + (TimeRaw.second() < 10 ? "0" + String(TimeRaw.second()) : String(TimeRaw.second()));
+			TimeString += "  " + (TimeRaw.day() < 10 ? "0" + String(TimeRaw.day()) : String(TimeRaw.day()));
+			TimeString += "/" + (TimeRaw.month() < 10 ? "0" + String(TimeRaw.month()) : String(TimeRaw.month()));
+			TimeString += "/" + String(TimeRaw.year() % 100);		
+			break;
+		default:
+			break;
+	}
+
 	return TimeString;
 }
 

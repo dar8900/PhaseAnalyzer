@@ -17,6 +17,13 @@ typedef struct
 	bool 	rtcConnected;
 }TIME_VAR;
 
+typedef enum
+{
+	ONLY_TIME = 0,
+	ONLY_DATE,
+	BOTH
+}TIME_2_TIMESTAMP_INFO;
+
 extern TIME_VAR Time;
 extern String TimeStr;
 extern String DateStr;
@@ -24,7 +31,7 @@ extern const uint8_t Day4Month[];
 extern DateTime RtcTimeDate;
 
 void RtcInit();
-String TimeStamp2String(uint32_t TimeStamp);
+String TimeStamp2String(uint32_t TimeStamp, uint8_t WichInfo);
 void GetTime();
 void SetTime(uint8_t NewHour, uint8_t NewMinute);
 void SetDate(uint8_t NewDay, uint8_t NewMonth, uint8_t NewYear);
