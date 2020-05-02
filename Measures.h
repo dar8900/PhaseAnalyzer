@@ -29,10 +29,10 @@
 #define VOLTAGE_BIAS 		1.704
 
 #define VOLTAGE_CORRECTION	0.410
-#define CURRENT_CORRECTION	0.15
+#define CURRENT_CORRECTION	0.2
 
 
-#define TARP_I				0.05
+#define TARP_I				0.15
 #define TARP_V				200.0
 
 

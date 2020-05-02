@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "EepromAnalyzer.h"
 #include "Logs.h"
+#include "Rele.h"
 
 #define CURRENT_PIN	A2  // ADC1
 #define VOLTAGE_PIN	A9  // ADC0
@@ -64,6 +65,8 @@ double PAttAcc = 0.0;
 
 double SimCurrent = 16.0, SimVoltage = 220.0, SimDelayI = 30, SimDelayV = 0.0;
 double SimCurrentRawVal[N_SAMPLE], SimVoltageRawVal[N_SAMPLE];
+
+double CurrentCorrection;
 
 bool simulationMode = SIM_ON;
 
@@ -265,7 +268,7 @@ void GetMeasure()
 				CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS);
 				VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
 				// DBG("Current Raw: ," + String(CurrentBiased));
-				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CURRENT_CORRECTION;
+				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
 				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * VOLTAGE_CORRECTION);
 				PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
 				CurrentAcc += (CurrentBiased * CurrentBiased);
@@ -285,21 +288,36 @@ void GetMeasure()
 				
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
-				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CURRENT_CORRECTION;
+				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
 				Voltage.actual = sqrtVoltage * VOLTAGE_CORRECTION; 
 				// DBG(sqrtVoltage);
-				
-				if(Current.actual < TARP_I || Voltage.actual < TARP_V)
+				if(!Switch.isActive)
 				{
-					if(Current.actual < TARP_I)
-						Current.actual = 0.0;
+					CurrentCorrection = CURRENT_CORRECTION;
+					Current.actual = 0.0;
 					if(Voltage.actual < TARP_V)
 						Voltage.actual = 0.0;
 					PAtt.actual = 0.0;
 					InvalidPf = true;
 				}
 				else
+				{
+					CurrentCorrection = 0.18;
+					if(Current.actual < TARP_I)
+						Current.actual = 0.0;
 					InvalidPf = false;
+				}
+				// if(Current.actual < TARP_I || Voltage.actual < TARP_V)
+				// {
+				// 	if(Current.actual < TARP_I)
+				// 		Current.actual = 0.0;
+				// 	if(Voltage.actual < TARP_V)
+				// 		Voltage.actual = 0.0;
+				// 	PAtt.actual = 0.0;
+				// 	InvalidPf = true;
+				// }
+				// else
+				// 	InvalidPf = false;
 				
 				PAttAcc = 0.0;
 				CurrentAcc = 0.0;
