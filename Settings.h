@@ -44,9 +44,10 @@ typedef enum
 	SWITCH_ALARM_ENABLE,			  // 15
 	ALARM_INSERT_DELAY,				  // 16
 	AVG_TIME,                         // 17
-	ENEGIES_SAVE_TIME,		  		  // 18		
-	SIMULATION_MODE,                  // 19
-	MAX_SETTINGS                      // 20
+	ENEGIES_SAVE_TIME,		  		  // 18	
+	CENT_PER_KVARH,					  // 19
+	SIMULATION_MODE,                  // 20
+	MAX_SETTINGS                      // 21
 }SETTINGS_LIST;
 
 

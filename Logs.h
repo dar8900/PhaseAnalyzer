@@ -20,6 +20,10 @@
 #define ACTIVE_ENERGY_SAVE_ADDR				520 // +8 -> 527
 #define REACTIVE_ENERGY_SAVE_ADDR			528 // +8 -> 535
 
+#define APPARENT_ENERGY_F1_SAVE_ADDR		536 // +4 -> 539
+#define APPARENT_ENERGY_F2_SAVE_ADDR		540 // +4 -> 543
+#define APPARENT_ENERGY_F3_SAVE_ADDR		544 // +4 -> 547
+
 #pragma pack(1)
 typedef struct
 {

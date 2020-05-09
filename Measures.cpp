@@ -7,6 +7,7 @@
 #include "EepromAnalyzer.h"
 #include "Logs.h"
 #include "Rele.h"
+#include "Time.h"
 
 #define CURRENT_PIN	A2  // ADC1
 #define VOLTAGE_PIN	A9  // ADC0
@@ -37,6 +38,12 @@ MEASURES_VAR PApp;
 MEASURES_VAR EnAtt;
 MEASURES_VAR EnRea;
 MEASURES_VAR EnApp;
+
+MEASURES_VAR EnAppF1;
+MEASURES_VAR EnAppF2;
+MEASURES_VAR EnAppF3;
+
+double EnAppTotMoney;
 
 ADC *adc = new ADC(); // adc object
 
@@ -212,6 +219,8 @@ static void CalcAvg()
 	}
 }
 
+
+
 static void CalcEnergy()
 {
 	EnAttAcc += PAtt.actual;
@@ -226,12 +235,28 @@ static void CalcEnergy()
 		EnRea.actual += (EnReaAcc / EnReaCnt) / 3600;
 		EnApp.actual += (EnAppAcc / EnAppCnt) / 3600;
 		DailyEnApp = EnApp.actual; 
+		switch(BandHour)
+		{
+			case F1:
+				EnAppF1.actual += (EnAppAcc / EnAppCnt) / 3600;
+				break;
+			case F2:
+				EnAppF2.actual += (EnAppAcc / EnAppCnt) / 3600;
+				break;
+			case F3:
+				EnAppF3.actual += (EnAppAcc / EnAppCnt) / 3600;
+				break;
+			default:
+				break;
+		}
+		EnAppTotMoney = (EnApp.actual * ((double)SettingsVals[CENT_PER_KVARH] * 0.01) / 1000.0);
+		
 		EnAttAcc  = 0.0;
 		EnReaAcc  = 0.0;
 		EnAppAcc  = 0.0;
 		EnAttCnt = 0;
 		EnReaCnt = 0;
-		EnAppCnt = 0;		
+		EnAppCnt = 0;
 	}
 }
 
@@ -408,4 +433,8 @@ void ResetEnergies()
 	EnAtt.actual = 0.0;
 	EnRea.actual = 0.0;
 	EnApp.actual = 0.0;
+	EnAppF1.actual = 0.0;
+	EnAppF2.actual = 0.0;
+	EnAppF3.actual = 0.0;
+	EnAppTotMoney = 0.0;
 }

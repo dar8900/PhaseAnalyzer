@@ -57,6 +57,12 @@ extern MEASURES_VAR EnAtt;
 extern MEASURES_VAR EnRea;
 extern MEASURES_VAR EnApp;
 
+extern MEASURES_VAR EnAppF1;
+extern MEASURES_VAR EnAppF2;
+extern MEASURES_VAR EnAppF3;
+
+extern double EnAppTotMoney;
+
 extern double DailyEnApp;
 
 extern volatile double CurrentRawVal[];

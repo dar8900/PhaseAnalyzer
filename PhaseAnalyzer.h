@@ -23,7 +23,7 @@
 
 #define MIN_TO_SEC(min)			(min * 60)
 
-#define FW_VERSION	0.9
+#define FW_VERSION	1.0
 
 typedef enum
 {
@@ -61,6 +61,7 @@ typedef enum
 	V_I_PF_AVG,
 	PATT_PREA_PAPP_AVG,
 	ENATT_ENREA_ENAPP,
+	ENAPPF1_ENAPPF2_ENAPPF3,
 	LIVE_CNT,
 	MAX_MEASURE_PAGES
 }MEASURE_PAGES;

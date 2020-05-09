@@ -74,6 +74,7 @@ void loop()
 			Time.rtcStarted = true;
 			ChangeTimeDate(false, false);
 			Time.rtcStarted = true;
+			GetTime();
 			ReadDailyEnergies();
 			AnalyzerPage = MAIN_MENU;
 			break;

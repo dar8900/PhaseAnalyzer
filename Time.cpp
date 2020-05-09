@@ -11,6 +11,8 @@
 static RTC_DS1307 rtc;
 DateTime RtcTimeDate;
 
+uint8_t BandHour;
+
 const uint8_t Day4Month[12] = 
 {
 	31, 
@@ -87,11 +89,68 @@ String TimeStamp2String(uint32_t TimeStamp, uint8_t WichInfo)
 	return TimeString;
 }
 
+static void CalcBend()
+{
+	if(Time.weekDay >= LUNEDI && Time.weekDay <= VENERDI)
+	{
+		if((Time.day == 1 && Time.month == 1) || (Time.day == 6 && Time.month == 1) ||
+			(Time.day == 25 && Time.month == 4) || (Time.day == 1 && Time.month == 5) ||
+			(Time.day == 2 && Time.month == 6) || (Time.day == 15 && Time.month == 8) ||
+			(Time.day == 1 && Time.month == 11) || (Time.day == 8 && Time.month == 12) ||
+			(Time.day == 25 && Time.month == 12) || (Time.day == 26 && Time.month == 12))
+			{
+				BandHour = F3;
+			}
+		else
+		{
+			if((Time.hour >= 7 && Time.hour < 8) || (Time.hour >= 19 && Time.hour <= 23))
+			{
+				BandHour = F2;
+			}
+			else if((Time.hour >= 8 && Time.hour < 19))
+			{
+				BandHour = F1;
+			}
+			else
+			{
+				BandHour = F3;
+			}
+		}
+	}
+	else if(Time.weekDay == SABATO)
+	{
+		if((Time.day == 1 && Time.month == 1) || (Time.day == 6 && Time.month == 1) ||
+			(Time.day == 25 && Time.month == 4) || (Time.day == 1 && Time.month == 5) ||
+			(Time.day == 2 && Time.month == 6) || (Time.day == 15 && Time.month == 8) ||
+			(Time.day == 1 && Time.month == 11) || (Time.day == 8 && Time.month == 12) ||
+			(Time.day == 25 && Time.month == 12) || (Time.day == 26 && Time.month == 12))
+			{
+				BandHour = F3;
+			}
+		else
+		{
+			if(Time.hour >= 7 && Time.hour < 23)
+			{
+				BandHour = F2;
+			}
+			else
+			{
+				BandHour = F3;
+			}
+		}		
+	}
+	else
+	{
+		BandHour = F3;
+	}
+}
+
 void GetTime()
 {
 	if(Time.rtcStarted)
 	{
 		RtcTimeDate = rtc.now();
+		Time.weekDay = RtcTimeDate.dayOfTheWeek();
 		Time.timeInUnixTime = RtcTimeDate.unixtime();
 		Time.hour = RtcTimeDate.hour();
 		Time.minute = RtcTimeDate.minute();
@@ -118,6 +177,7 @@ void GetTime()
 			DateStr += "/" + String(Time.month);
 		
 		DateStr += "/" + String(Time.year);
+		CalcBend();
 	}
 	else
 	{

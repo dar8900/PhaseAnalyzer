@@ -11,11 +11,31 @@ typedef struct
 	uint8_t day;
 	uint8_t month;
 	uint16_t year;
+	uint8_t weekDay;
 	uint32_t liveCnt;
 	uint32_t timeInUnixTime;
 	bool 	rtcStarted;
 	bool 	rtcConnected;
 }TIME_VAR;
+
+typedef enum
+{
+	F1 = 0,
+	F2,
+	F3,
+	MAX_BAND
+}BAND_HOURS;
+
+typedef enum
+{
+	DOMENICA = 0,
+	LUNEDI,
+	MARTEDI,
+	MERCOLEDI,
+	GIOVEDI,
+	VENERDI,
+	SABATO
+}WEEK_DAY_NUM;
 
 typedef enum
 {
@@ -29,6 +49,8 @@ extern String TimeStr;
 extern String DateStr;
 extern const uint8_t Day4Month[];
 extern DateTime RtcTimeDate;
+
+extern uint8_t BandHour;
 
 void RtcInit();
 String TimeStamp2String(uint32_t TimeStamp, uint8_t WichInfo);

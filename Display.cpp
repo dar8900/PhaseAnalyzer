@@ -40,6 +40,7 @@ typedef enum
 	UINT,
 	DOUBLE,
 	DOUBLE_NO_FORMAT,
+	MONEY,
 	TIME_TYPE,
 	MAX_TYPES
 }MEASURE_TYPES;
@@ -63,29 +64,33 @@ typedef struct
 
 const MEASURE_PAGE MeasureTab[MAX_MEASURE_PAGES] = 
 {
-	{{&Current.actual, &Current.max	    , &Current.min, "A"   , DOUBLE 			 }, 
-	{&Voltage.actual , &Voltage.max     , &Voltage.min, "V"   , DOUBLE 			 } , 
-	{&Pf.actual      , &Pf.max          , &Pf.min     , ""    , DOUBLE_NO_FORMAT }},
-	
-	{{&PAtt.actual   , &PAtt.max   	    , &PAtt.min   , "W"   , DOUBLE           }, 
-	{&PRea.actual    , &PRea.max        , &PRea.min   , "VAr" , DOUBLE           } , 
-	{&PApp.actual    , &PApp.max        , &PApp.min   , "VA"  , DOUBLE           }},
-	
-	{{&Current.avg   , &Current.maxAvg  , NULL        , "A"   , DOUBLE           }, 
-	{&Voltage.avg    , &Voltage.maxAvg  , NULL        , "V"   , DOUBLE           } , 
-	{&Pf.avg         , &Pf.maxAvg       , NULL        , ""    , DOUBLE_NO_FORMAT }},
-	
-	{{&PAtt.avg      , &PAtt.maxAvg     , NULL        , "W"   , DOUBLE           }, 
-	{&PRea.avg       , &PRea.maxAvg     , NULL        , "VAr" , DOUBLE           } ,
-	{&PApp.avg       , &PApp.maxAvg     , NULL        , "VA"  , DOUBLE           }},
-	
-	{{&EnAtt.actual  , NULL        		, NULL        , "Wh"  , DOUBLE 		     }, 
-	{&EnRea.actual   , NULL             , NULL        , "VArh", DOUBLE 		     } , 
-	{&EnApp.actual   , NULL             , NULL  	  , "VAh" , DOUBLE 		     }},
-	
-	{{		   NULL  , NULL             , NULL        , ""    , NO_TYPE		     } , 
-	{&Time.liveCnt  , NULL        		, NULL        , ""    , TIME_TYPE	     }, 
-	{	       NULL  , NULL             , NULL  	  , ""    , NO_TYPE		     }},
+	{{&Current.actual  , &Current.max	  , &Current.min, "A"       , DOUBLE 			 }, 
+	{&Voltage.actual   , &Voltage.max     , &Voltage.min, "V"       , DOUBLE 			 } , 
+	{&Pf.actual        , &Pf.max          , &Pf.min     , ""        , DOUBLE_NO_FORMAT   }},
+					  										      
+	{{&PAtt.actual     , &PAtt.max   	  , &PAtt.min   , "W"       , DOUBLE             }, 
+	{&PRea.actual      , &PRea.max        , &PRea.min   , "VAr"     , DOUBLE             } , 
+	{&PApp.actual      , &PApp.max        , &PApp.min   , "VA"      , DOUBLE             }},
+					  										      
+	{{&Current.avg     , &Current.maxAvg  , NULL        , "A"       , DOUBLE             }, 
+	{&Voltage.avg      , &Voltage.maxAvg  , NULL        , "V"       , DOUBLE             } , 
+	{&Pf.avg           , &Pf.maxAvg       , NULL        , ""        , DOUBLE_NO_FORMAT   }},
+					  										      
+	{{&PAtt.avg        , &PAtt.maxAvg     , NULL        , "W"       , DOUBLE             }, 
+	{&PRea.avg         , &PRea.maxAvg     , NULL        , "VAr"     , DOUBLE             } ,
+	{&PApp.avg         , &PApp.maxAvg     , NULL        , "VA"      , DOUBLE             }},
+					  										      
+	{{&EnAtt.actual    , NULL        	  , NULL        , "Wh"      , DOUBLE 		     }, 
+	{&EnRea.actual     , NULL             , NULL        , "VArh"    , DOUBLE 		     } , 
+	{&EnApp.actual     , NULL             , NULL  	    , "VAh"     , DOUBLE 		     }},
+																						 
+	{{&EnAppF1.actual  , NULL        	  , NULL        , "VAh"     , DOUBLE 		     }, 
+	{&EnAppF2.actual   , NULL             , NULL        , "VAh"     , DOUBLE 		     } , 
+	{&EnAppF3.actual   , NULL             , NULL  	    , "VAh"     , DOUBLE 		     }},
+																						 
+	{{&EnAppTotMoney  , NULL              , NULL        , "E/kVAh"  , MONEY  		     } , 
+	{		   NULL   , NULL              , NULL        , ""        , NO_TYPE		     }, 
+	{&Time.liveCnt    , NULL        	  , NULL        , ""        , TIME_TYPE	         },},
 };
 
 const RANGES RangeTab[RANGE_TAB_LENGHT] = 
@@ -177,7 +182,8 @@ const char *MeasureTitle[MAX_MEASURE_PAGES] =
 	"Medie 1",
 	"Medie 2",
 	"Energie",
-	"Wake time",
+	"Fasce",
+	"Euro&Time"
 };
 
 const char *LogTitle[MAX_LOGS_PAGES] = 
@@ -707,6 +713,9 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 		case DOUBLE_NO_FORMAT:
 			MeasureCpy = *(double*)Measure2Format;
 			break;
+		case MONEY:
+			MeasureCpy = *(double*)Measure2Format;
+			break;
 		default:
 			break;
 			
@@ -722,6 +731,15 @@ static void FormatMeasure(void *Measure2Format, String *Measure, String *Udm, ui
 			*Udm = String(RangeTab[Range].odg);
 		}
 		*Measure = String(MeasureCpy, 3);
+	}
+	else if(Type == MONEY)
+	{
+		MeasureCpy *= RangeTab[11].rescale;
+		// if(RangeTab[9].odg != ' ')
+		// {
+			// *Udm = String(RangeTab[9].odg);
+		// }
+		*Measure = String(MeasureCpy, 3);		
 	}
 	else if(Type == UINT)
 	{
@@ -864,6 +882,31 @@ static void DrawMeasureLine(uint8_t MeasurePage, uint8_t Line)
 		Display.setFont(Arial_10_Bold);
 		Display.setCursor(0, MEASURE_POS + 66 + (Line * 65));
 		Display.print(Min.c_str());	
+	}
+	else
+	{
+		if(MeasurePage == ENAPPF1_ENAPPF2_ENAPPF3)
+		{
+			String BandStr = "";
+			// Disegna Fascia
+			Display.setFont(Arial_9_Bold);	
+			Display.setCursor(0, MEASURE_POS + 30 + (Line * 65));
+			switch(Line)
+			{
+				case LINE_1:
+					BandStr = "F1";
+					break;
+				case LINE_2:
+					BandStr = "F2";
+					break;
+				case LINE_3:
+					BandStr = "F3";
+					break;
+				default:
+					break;
+			}
+			Display.print(BandStr.c_str());			
+		}
 	}
 	
 }
