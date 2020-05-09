@@ -104,8 +104,8 @@
 
 typedef enum
 {
-	D_LANDSCAPE_1 = 0,
-	D_LONG_1,
+	D_LONG_1 = 0,
+	D_LANDSCAPE_1,
 	D_LONG_2,
 	D_LANDSCAPE_2,
 	D_MAX_ROTATION

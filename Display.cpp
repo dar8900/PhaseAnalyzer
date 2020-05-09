@@ -291,7 +291,7 @@ void DisplaySetRotation(uint8_t Rotation)
 			DisplayParam.min_analog_y = 250;	
 			Touch.setRotation(T_LANDSCAPE_1);
 			break;
-		case D_LONG_1:
+		case D_LONG_1:	
 			DisplayParam.max_x = 240;
 			DisplayParam.max_y = 320;
 			DisplayParam.min_analog_x = 250;
@@ -1146,7 +1146,7 @@ void DrawLogsList()
 			}
 			Display.setTextColor(ILI9341_WHITE);
 			Display.setFont(Arial_12);
-			NumPage = String(LogItem + 1) + "/" + String(MaxList);
+			NumPage = String(LogItem) + "/" + String(MaxList != 0 ? MaxList - 1 : 1);
 			Display.setCursor(RIGHT_ALIGN(NumPage.c_str()) - 10, MENU_TITLE_POS + 10);
 			Display.print(NumPage.c_str());
 			Display.setFont(Arial_24_Bold);
@@ -2700,6 +2700,14 @@ void DrawResetPage()
 						if(ConfirmReset)
 						{
 							WriteResetDeflt();
+							ResetMaxMin();
+							ResetAvg();
+							ResetEnergies();	
+							ResetSavedEnergies();
+							ResetLogs();
+							ResetDailyEnergies();
+							ResetSwitchStatistics();
+							WriteSwitchStatistics(true);
 							delay(10);
 							CPU_RESTART;
 						}

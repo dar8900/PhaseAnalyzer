@@ -17,7 +17,7 @@ void setup()
 
 	// while(!Serial){}
 	
-	DisplaySetup(D_LANDSCAPE_2);
+	DisplaySetup(D_LANDSCAPE_1);
 	AnalogInit();
 	RtcInit();
 	if(!Time.rtcStarted && Time.rtcConnected)

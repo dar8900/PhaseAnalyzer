@@ -5,7 +5,7 @@
 #include "EepromAnalyzer.h"
 #include "Measures.h"
 
-#undef WRITE_IN_EEPROM	
+#define WRITE_IN_EEPROM	
 
 LOGS_DEF LogBuffer[MAX_LOGS];
 DAILY_ENERGIES_T DailyEnergies;
