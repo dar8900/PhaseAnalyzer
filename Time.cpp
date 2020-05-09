@@ -45,7 +45,7 @@ void RtcInit()
 	{
 		if (! rtc.isrunning())
 		{
-			rtc.adjust(DateTime(DFLT_YEAR, DFLT_MONTH, DFLT_DAY, DFLT_HOUR, DFLT_MINUTE, 0));
+			// rtc.adjust(DateTime(DFLT_YEAR, DFLT_MONTH, DFLT_DAY, DFLT_HOUR, DFLT_MINUTE, 0));
 			Time.rtcStarted = false;
 		}
 		else

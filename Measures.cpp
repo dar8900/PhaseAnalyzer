@@ -302,9 +302,12 @@ void GetMeasure()
 				}
 				else
 				{
-					CurrentCorrection = 0.18;
+					CurrentCorrection = CURRENT_CORRECTION_SW_ACTIVE;
 					if(Current.actual < TARP_I)
+					{
 						Current.actual = 0.0;
+						PAtt.actual = 0.0;
+					}
 					InvalidPf = false;
 				}
 				// if(Current.actual < TARP_I || Voltage.actual < TARP_V)
@@ -334,7 +337,7 @@ void GetMeasure()
 	}
 
 	PApp.actual = Current.actual * Voltage.actual;
-	if((int64_t)PApp.actual != 0)
+	if((int64_t)PApp.actual != 0 && PApp.actual >= PAtt.actual)
 	{
 		Pf.actual = PAtt.actual / PApp.actual;
 	}
@@ -345,8 +348,8 @@ void GetMeasure()
 		Pf.actual = PF_INVALID;
 	}
 	
-	
-	PRea.actual = PApp.actual - PAtt.actual;
+	if(PApp.actual >= PAtt.actual)
+		PRea.actual = PApp.actual - PAtt.actual;
 	
 	if(FirstCalcMaxMinTimer.hasPassed(2500))
 	{

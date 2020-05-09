@@ -71,6 +71,7 @@ void loop()
 			break;
 		case SET_TIME_DATE:
 			ChangeTimeDate(true, false);
+			Time.rtcStarted = true;
 			ChangeTimeDate(false, false);
 			Time.rtcStarted = true;
 			ReadDailyEnergies();

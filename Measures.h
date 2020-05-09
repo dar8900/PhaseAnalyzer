@@ -28,11 +28,12 @@
 #define CURRENT_BIAS 		1.297
 #define VOLTAGE_BIAS 		1.704
 
-#define VOLTAGE_CORRECTION	0.400
-#define CURRENT_CORRECTION	0.185
+#define VOLTAGE_CORRECTION			    0.400
+#define CURRENT_CORRECTION			    0.2
+#define CURRENT_CORRECTION_SW_ACTIVE	0.070
 
 
-#define TARP_I				0.15
+#define TARP_I				0.130
 #define TARP_V				200.0
 
 
