@@ -1014,11 +1014,11 @@ static void DrawGraph()
 	}
 	else
 	{
-		for(int i = 0; i < GRAPHIC_W; i++)
-		{
-			CurrentGraphicCopy[i] = (int32_t)CurrentRawVal[i];
-			VoltageGraphicCopy[i] = (int32_t)VoltageRawVal[i];
-		}		
+		// for(int i = 0; i < GRAPHIC_W; i++)
+		// {
+			// CurrentGraphicCopy[i] = (int32_t)CurrentRawVal[i];
+			// VoltageGraphicCopy[i] = (int32_t)VoltageRawVal[i];
+		// }		
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
 			if(MaxValI < CurrentGraphicCopy[i])
