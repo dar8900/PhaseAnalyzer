@@ -65,6 +65,8 @@ double DailyEnApp;
 volatile double CurrentRawVal[N_SAMPLE], VoltageRawVal[N_SAMPLE];
 volatile uint16_t AcdBufferIndex = 0;
 volatile bool BuffersFilled = false;
+volatile static bool StartCollecting = false;
+
 uint8_t NWindows;
 
 double CurrentAcc = 0, VoltageAcc = 0;
@@ -260,6 +262,8 @@ static void CalcEnergy()
 	}
 }
 
+
+
 void AcdCallBackFunc()
 {
 	if(!BuffersFilled)
@@ -267,11 +271,17 @@ void AcdCallBackFunc()
 		SyncroMeasureResult = adc->analogSynchronizedRead(VOLTAGE_PIN, CURRENT_PIN);
 		CurrentRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc1;
 		VoltageRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc0;
-		AcdBufferIndex++;
-		if(AcdBufferIndex >= N_SAMPLE)
+		if((VoltageRawVal[AcdBufferIndex] > 2100 && VoltageRawVal[AcdBufferIndex] < 2125) && !StartCollecting)
+			StartCollecting = true;
+		if(StartCollecting)
 		{
-			BuffersFilled = true;
-			AcdBufferIndex = 0;
+			AcdBufferIndex++;
+			if(AcdBufferIndex >= N_SAMPLE)
+			{
+				BuffersFilled = true;
+				StartCollecting = false;
+				AcdBufferIndex = 0;
+			}
 		}
 	}
 }
