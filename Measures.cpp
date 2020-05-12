@@ -29,6 +29,9 @@ enum
 
 void AcdCallBackFunc(void);
 
+extern int32_t CurrentGraphicCopy[]; 
+extern int32_t VoltageGraphicCopy[];
+
 MEASURES_VAR Current;
 MEASURES_VAR Voltage;
 MEASURES_VAR Pf;
@@ -361,6 +364,11 @@ void GetMeasure()
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
 			}
+			for(int i = 0; i < N_SAMPLE; i++)
+			{
+				CurrentGraphicCopy[i] = (int32_t)CurrentRawVal[i];
+				VoltageGraphicCopy[i] = (int32_t)VoltageRawVal[i];
+			}	
 			memset(CurrentRawVal, 0x00, sizeof(CurrentRawVal) / sizeof(CurrentRawVal[0]));
 			memset(VoltageRawVal, 0x00, sizeof(VoltageRawVal) / sizeof(VoltageRawVal[0]));
 			BuffersFilled = false;
