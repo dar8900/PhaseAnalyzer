@@ -15,22 +15,23 @@ const int32_t SettingsDefVal[MAX_SETTINGS] =
 	CURRENT_LOG,			//SET_LOG_MEASURE,                     //  3
 	DISABLED,				//ENABLE_LOG_MEASURE,                  //  4
 	ENABLED,				//ENABLE_LOG_DAILY_ENERGY, 	           //  5
-	10000,					//OVER_CURRENT_VALUE,                  //  6
-	DISABLED,				//ENABLE_OVER_CURRENT,                 //  7
-	1000,					//UNDER_CURRENT_VALUE,                 //  8
-	DISABLED,				//ENABLE_UNDER_CURRENT,                //  9
-	2000,					//OVER_ATT_POWER_VALUE,                // 10
-	DISABLED,				//ENABLE_OVER_PATT_POWER,              // 11
-	500,					//UNDER_ATT_POWER_VALUE,               // 12
-	DISABLED,				//ENABLE_UNDER_PATT_POWER,             // 13
-	NONE,					//SET_SWITCH_ALARM                     // 14
-	DISABLED,               //SWITCH_ALARM_ENABLE                  // 15
-	5,						//ALARM_INSERT_DELAY                   // 16
-	1,						//AVG_TIME,                            // 17
-	15,						//ENEGIES_SAVE_TIME,    	           // 18
-	20,                     //CENT_PER_KVARH,				       // 19
-	DISABLED,				//SIMULATION_MODE,                     // 20
-};
+	DISABLED,				//ENABLE_SAVE_SWITCH_STATE, 	       //  6
+	10000,					//OVER_CURRENT_VALUE,                  //  7
+	DISABLED,				//ENABLE_OVER_CURRENT,                 //  8
+	1000,					//UNDER_CURRENT_VALUE,                 //  9
+	DISABLED,				//ENABLE_UNDER_CURRENT,                // 10
+	2000,					//OVER_ATT_POWER_VALUE,                // 11
+	DISABLED,				//ENABLE_OVER_PATT_POWER,              // 12
+	500,					//UNDER_ATT_POWER_VALUE,               // 13
+	DISABLED,				//ENABLE_UNDER_PATT_POWER,             // 14
+	NONE,					//SET_SWITCH_ALARM                     // 15
+	DISABLED,               //SWITCH_ALARM_ENABLE                  // 16
+	5,						//ALARM_INSERT_DELAY                   // 17
+	1,						//AVG_TIME,                            // 18
+	15,						//ENEGIES_SAVE_TIME,    	           // 19
+	20,                     //CENT_PER_KVARH,				       // 20
+	DISABLED,				//SIMULATION_MODE,                     // 21
+};                                                                    
 
 
 const ENUM_VAL LogMeasureEnum[MAX_MEASURE_LOG] = 
@@ -101,6 +102,12 @@ const ENUM_VAL AlarmSwitchEnableEnum[2] =
 	{&Switch.haveAlarm, "Abilitato"      , BOOLEAN_TYPE},
 };
 
+const ENUM_VAL EnableSaveSwitchState[2] = 
+{
+	{&Switch.saveSwitchState, "Disabilitato"   , BOOLEAN_TYPE},
+	{&Switch.saveSwitchState, "Abilitato"      , BOOLEAN_TYPE},
+};
+
 const SETTING_DEF Settings[MAX_SETTINGS] = 
 {
 	{&SettingsVals[CHANGE_TIME]   	        	, 0			 		 , 0 						, DATE_TYPE , NULL				     , ""    , "Imposta ora"		         },
@@ -109,6 +116,7 @@ const SETTING_DEF Settings[MAX_SETTINGS] =
 	{&SettingsVals[SET_LOG_MEASURE]		    	, CURRENT_LOG		 , MAX_MEASURE_LOG - 1  	, ENUM_TYPE , LogMeasureEnum         , ""    , "Misura di log"		     },
 	{&SettingsVals[ENABLE_LOG_MEASURE]    		, DISABLED		     , ENABLED 					, ENUM_TYPE , LogEnable			     , ""    , "Abilita log"			     },
 	{&SettingsVals[ENABLE_LOG_DAILY_ENERGY] 	, DISABLED		     , ENABLED 					, ENUM_TYPE , DailyEnergiesLogEnable , ""    , "Abilita en.app giorn."    },
+	{&SettingsVals[ENABLE_SAVE_SWITCH_STATE] 	, DISABLED		     , ENABLED 					, ENUM_TYPE , EnableSaveSwitchState  , ""    , "Salva stato presa"        },
 	{&SettingsVals[OVER_CURRENT_VALUE]      	, 1000		 		 , 15000		 	    	, VALUE_TYPE, NULL				     , "mA"  , "Sovra corrente"		     },
 	{&SettingsVals[ENABLE_OVER_CURRENT]     	, DISABLED			 , ENABLED  				, ENUM_TYPE , OverCurrentEnableEnum  , ""    , "Abilita sovra corrente"   },
 	{&SettingsVals[UNDER_CURRENT_VALUE]     	, 0					 , 1000  			 	   	, VALUE_TYPE, NULL				     , "mA"  , "Sotto corrente"		     },

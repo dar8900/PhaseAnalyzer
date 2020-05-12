@@ -9,7 +9,8 @@
 #define SETTINGS_CHECKSUM_ADDR				256  // +4 bytes -> 259
 
 #define SWITCH_STATISTICS_START_ADDR		260  // +6 bytes -> 265
-			
+#define SWITCH_STATE_ADDR	             	266  // +1 bytes -> 267
+		
 #define RESET_DFLT_ADDR						550 // +1 bytes -> 551
 
 
@@ -21,6 +22,8 @@ void WriteAllSettings(bool toDflt);
 void ReadAllSettings();
 void WriteResetDeflt();
 bool ReadResetDflt();
+void WriteSwitchState();
+void ReadSwitchState();
 void WriteSwitchStatistics(bool IsAReset);
 void ReadSwitchStatistics();
 #endif

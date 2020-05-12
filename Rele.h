@@ -17,6 +17,7 @@ typedef struct
 	uint16_t nSwitch;
 	uint32_t timerDuration;
 	uint8_t  associatedAlarm;
+	bool saveSwitchState;
 }RELE_DEF;
 
 typedef enum

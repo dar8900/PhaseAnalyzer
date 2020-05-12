@@ -269,7 +269,8 @@ void DoTasks()
 	}
 	else
 		BtRefresh.restart();
-
+	
+	WriteSwitchState();
 	WriteSwitchStatistics(false);
 
 	if(GetTimeTimer.hasPassed(250, true))

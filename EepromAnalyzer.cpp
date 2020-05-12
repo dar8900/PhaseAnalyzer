@@ -3,8 +3,9 @@
 #include "EepromAnalyzer.h"
 #include "Display.h"
 #include "Rele.h"
+#include "Settings.h"
 
-
+Chrono WriteSwitchStateTimer;
 Chrono WriteSwitchStatisticsTimer(Chrono::SECONDS);
 
 bool InitMemory()
@@ -154,6 +155,24 @@ bool ReadResetDflt()
 	return isReset;
 }
 
+void WriteSwitchState()
+{
+	bool OldState = false;
+	if(WriteSwitchStateTimer.hasPassed(500, true))
+	{
+		EEPROM.get(SWITCH_STATE_ADDR, OldState);
+		if(Switch.isActive != OldState && Switch.saveSwitchState)
+		{
+			EEPROM.put(SWITCH_STATE_ADDR, Switch.isActive);
+		}
+	}
+}
+
+void ReadSwitchState()
+{
+	if(Switch.saveSwitchState)
+		EEPROM.get(SWITCH_STATE_ADDR, Switch.isActive);
+}
 
 void WriteSwitchStatistics(bool IsAReset)
 {

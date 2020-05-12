@@ -32,22 +32,23 @@ typedef enum
 	SET_LOG_MEASURE,                  //  3
 	ENABLE_LOG_MEASURE,               //  4
 	ENABLE_LOG_DAILY_ENERGY,		  //  5     
-	OVER_CURRENT_VALUE,               //  6
-	ENABLE_OVER_CURRENT,              //  7
-	UNDER_CURRENT_VALUE,              //  8
-	ENABLE_UNDER_CURRENT,             //  9
-	OVER_APP_POWER_VALUE,             // 10
-	ENABLE_OVER_PAPP_POWER,           // 11
-	UNDER_APP_POWER_VALUE,            // 12
-	ENABLE_UNDER_PAPP_POWER,          // 13
-	SET_SWITCH_ALARM,				  // 14
-	SWITCH_ALARM_ENABLE,			  // 15
-	ALARM_INSERT_DELAY,				  // 16
-	AVG_TIME,                         // 17
-	ENEGIES_SAVE_TIME,		  		  // 18	
-	CENT_PER_KVARH,					  // 19
-	SIMULATION_MODE,                  // 20
-	MAX_SETTINGS                      // 21
+	ENABLE_SAVE_SWITCH_STATE,		  //  6
+	OVER_CURRENT_VALUE,               //  7
+	ENABLE_OVER_CURRENT,              //  8
+	UNDER_CURRENT_VALUE,              //  9
+	ENABLE_UNDER_CURRENT,             // 10
+	OVER_APP_POWER_VALUE,             // 11
+	ENABLE_OVER_PAPP_POWER,           // 12
+	UNDER_APP_POWER_VALUE,            // 13
+	ENABLE_UNDER_PAPP_POWER,          // 14
+	SET_SWITCH_ALARM,				  // 15
+	SWITCH_ALARM_ENABLE,			  // 16
+	ALARM_INSERT_DELAY,				  // 17
+	AVG_TIME,                         // 18
+	ENEGIES_SAVE_TIME,		  		  // 19	
+	CENT_PER_KVARH,					  // 20
+	SIMULATION_MODE,                  // 21
+	MAX_SETTINGS                      // 22
 }SETTINGS_LIST;
 
 

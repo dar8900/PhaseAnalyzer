@@ -28,6 +28,7 @@ void setup()
 	ReadAllLogs();
 	ReadSavedEnergies();
 	ReadDailyEnergies();
+	ReadSwitchState();
 	ReadSwitchStatistics();
 	DBG("Software started");
 }
