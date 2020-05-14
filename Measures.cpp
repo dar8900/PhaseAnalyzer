@@ -80,6 +80,7 @@ double SimCurrentRawVal[N_SAMPLE], SimVoltageRawVal[N_SAMPLE];
 
 double CurrentCorrection;
 
+bool EnableCalcEnergyAvg = false;
 bool simulationMode = SIM_ON;
 
 Chrono AvgTimer_1(Chrono::SECONDS), AvgTimer_2, EnergyTimer, FirstCalcMaxMinTimer;
@@ -274,7 +275,7 @@ void AcdCallBackFunc()
 		SyncroMeasureResult = adc->analogSynchronizedRead(VOLTAGE_PIN, CURRENT_PIN);
 		CurrentRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc1;
 		VoltageRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc0;
-		if((VoltageRawVal[AcdBufferIndex] > 2100 && VoltageRawVal[AcdBufferIndex] < 2125) && !StartCollecting)
+		if((VoltageRawVal[AcdBufferIndex] > 1800 && VoltageRawVal[AcdBufferIndex] < 1850) && !StartCollecting)
 			StartCollecting = true;
 		if(StartCollecting)
 		{
@@ -403,8 +404,11 @@ void GetMeasure()
 		CalcMaxMin(&PAtt);
 		CalcMaxMin(&PRea);
 		CalcMaxMin(&PApp);
-		CalcEnergy();
-		CalcAvg();
+		if(EnableCalcEnergyAvg)
+		{
+			CalcEnergy();
+			CalcAvg();
+		}
 	}
 	CalcMaxAvg(&Current);
 	CalcMaxAvg(&Voltage);
@@ -416,18 +420,18 @@ void GetMeasure()
 
 void ResetMaxMin()
 {
-	Current.min = 0.0;
-	Voltage.min = 0.0;
-	PAtt.min = 0.0;
-	PRea.min = 0.0;
-	PApp.min = 0.0;
-	Pf.min = 0.0;
+	Current.min = 16.0;
+	Voltage.min = 230.0;
+	PAtt.min = 3680.0;
+	PRea.min = 3680.0;
+	PApp.min = 3680.0;
+	Pf.min = 1.000;
+	Pf.max = PF_INVALID;
 	Current.max = 0.0;
 	Voltage.max = 0.0;
 	PAtt.max = 0.0;
 	PRea.max = 0.0;
 	PApp.max = 0.0;
-	Pf.max = 0.0;
 }
 
 void ResetAvg()

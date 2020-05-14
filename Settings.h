@@ -47,8 +47,9 @@ typedef enum
 	AVG_TIME,                         // 18
 	ENEGIES_SAVE_TIME,		  		  // 19	
 	CENT_PER_KVARH,					  // 20
-	SIMULATION_MODE,                  // 21
-	MAX_SETTINGS                      // 22
+	ENABLE_ENERGY_AVG_CALC,			  // 21
+	SIMULATION_MODE,                  // 22
+	MAX_SETTINGS                      // 23
 }SETTINGS_LIST;
 
 

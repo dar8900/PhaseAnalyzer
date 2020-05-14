@@ -980,6 +980,8 @@ void DrawMeasurePage()
 	}		
 }
 
+
+
 static void DrawGraph()
 {
 	int32_t y = 0, MaxValI = 0, MaxValV = 0;
@@ -1019,30 +1021,32 @@ static void DrawGraph()
 		// {
 			// CurrentGraphicCopy[i] = (int32_t)CurrentRawVal[i];
 			// VoltageGraphicCopy[i] = (int32_t)VoltageRawVal[i];
-		// }		
+		// }
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
-			if(MaxValI < CurrentGraphicCopy[i])
-				MaxValI = CurrentGraphicCopy[i];
-			if(MaxValV < VoltageGraphicCopy[i])
-				MaxValV = VoltageGraphicCopy[i];
+			if(MaxValI < abs(CurrentGraphicCopy[i]))
+				MaxValI = abs(CurrentGraphicCopy[i]);
+			if(MaxValV < abs(VoltageGraphicCopy[i]))
+				MaxValV = abs(VoltageGraphicCopy[i]);
 		}
 	
 		for(int i = 0; i < GRAPHIC_W; i++)
 		{
 			// CURRENT
-			if(CurrentGraphicCopy[i] > 0)
-				y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
-			else
-				y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
+			// if(CurrentGraphicCopy[i] > 0)
+				// y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
+			// else
+				// y = GRAPHIC_HALF - (((CurrentGraphicCopy[i] - TO_ADC_VAL(CURRENT_BIAS)) * (GRAPHIC_H / 3) / MaxValI) * 2);
+			y = (2 * GRAPHIC_HALF) - (CurrentGraphicCopy[i] * GRAPHIC_H / MaxValI) + 45;
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_RED);
 			
 			// VOLTAGE
-			if(VoltageGraphicCopy[i] > 0)
-				y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
-			else
-				y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
-			y -= 20;
+			// if(VoltageGraphicCopy[i] > 0)
+				// y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
+			// else
+				// y = GRAPHIC_HALF - (((VoltageGraphicCopy[i] - TO_ADC_VAL(VOLTAGE_BIAS)) * (GRAPHIC_H / 3) / MaxValV) * 2);
+			y = (2 * GRAPHIC_HALF) - (VoltageGraphicCopy[i] * GRAPHIC_H / MaxValV);
+			// y -= 20;
 			Display.drawPixel(GRAPHIC_X + i, y, ILI9341_CYAN);
 		}		
 	}

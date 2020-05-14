@@ -20,7 +20,7 @@
 // Periodo di presa dati in us (20 / 200 * 1000)
 #define ADC_TIMER_PERIOD	100 
 
-#define MAX_WINDOWS		     15 // Raccolgo dati per MAX_WINDOWS lunghezze d'onda
+#define MAX_WINDOWS		     12 // Raccolgo dati per MAX_WINDOWS lunghezze d'onda
 
 #define PF_INVALID 		    2.0
 #define TO_ADC_VAL(volt)   (volt * 4096 / 3.3)
@@ -28,7 +28,7 @@
 #define CURRENT_BIAS 		1.297
 #define VOLTAGE_BIAS 		1.704
 
-#define VOLTAGE_CORRECTION			    0.390
+#define VOLTAGE_CORRECTION			    0.400
 #define CURRENT_CORRECTION			    0.2
 #define CURRENT_CORRECTION_SW_ACTIVE	0.070
 
@@ -71,6 +71,7 @@ extern volatile double VoltageRawVal[];
 extern double SimCurrentRawVal[];
 extern double SimVoltageRawVal[];
 
+extern bool EnableCalcEnergyAvg;
 extern bool simulationMode;
 extern double SimCurrent;
 extern double SimVoltage;
