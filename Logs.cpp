@@ -146,7 +146,7 @@ void SaveDailyEnergies()
 	double DailyEnAppCopy = DailyEnApp;
 	if(Time.rtcStarted && EnableDailyEnergies)
 	{
-		if(Time.hour == 0 && Time.minute == 0 && Time.second == 0 && !NotRewriteDailyEnergies)
+		if(Time.hour == 21 && Time.minute == 0 && Time.second == 0 && !NotRewriteDailyEnergies)
 		{
 			NotRewriteDailyEnergies = true;
 			if(DailyEnergies.lastDailyEnergyIndex != 0)
@@ -180,7 +180,7 @@ void SaveDailyEnergies()
 			// DBG("LastDayIndex: " + String(DailyEnergies.lastDailyEnergyIndex));
 			// #endif			
 		}
-		else if(Time.hour == 0 && Time.minute == 0 && Time.second != 0)
+		else if(Time.hour == 21 && Time.minute == 0 && Time.second != 0)
 		{
 			NotRewriteDailyEnergies = false;
 		}
