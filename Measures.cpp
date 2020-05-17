@@ -13,7 +13,7 @@
 #define VOLTAGE_PIN	A9  // ADC0
 
 
-#define TO_RAD(grd) (grd * M_PI / 180)
+
 
 #define TA_TURN_RATIO		1000.0
 #define BURDEN_RESISTOR		70.0

@@ -4,6 +4,9 @@
 #define SIM_ON		true
 #define SIM_OFF		false
 
+#define TO_RAD(grd)    (grd * M_PI / 180.0)
+#define TO_GRAD(rad)   (rad * 180.0 / M_PI)
+
 #define SIM_CURR	         16
 #define SIM_VOLT	         220
 #define SIM_I_AMP(curr)		((curr * 4096 / 16) * 1.4142)

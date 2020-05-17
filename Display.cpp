@@ -982,7 +982,7 @@ void DrawMeasurePage()
 
 
 
-static void DrawGraph()
+static void DrawWaveforms()
 {
 	int32_t y = 0, MaxValI = 0, MaxValV = 0;
 	Display.drawRoundRect(GRAPHIC_X, GRAPHIC_Y, GRAPHIC_W, GRAPHIC_H, 1, ILI9341_WHITE);
@@ -1059,11 +1059,36 @@ static void DrawGraph()
 	Display.print("V");
 }
 
+static void DrawPhasors()
+{
+	int32_t CurrentPhasor_x = 0, CurrentPhasor_y = 0;
+	double Angle = 0;
+	double FakePf = -0.5;
+	String AngleStr = "";
+	Display.drawCircle(PHASOR_X, PHASOR_Y, PHASOR_RADIUS, ILI9341_WHITE);
+	Display.drawFastVLine(PHASOR_X, PHASOR_Y - PHASOR_RADIUS, PHASOR_RADIUS * 2, ILI9341_DARKGREY);
+	Display.drawFastHLine(PHASOR_X - PHASOR_RADIUS , PHASOR_Y, PHASOR_RADIUS * 2, ILI9341_DARKGREY);
+	if((int32_t)Current.actual != 0 && (int32_t)Pf.actual != PF_INVALID)
+	{
+		Angle = (TO_GRAD(acos(Pf.actual)));
+		AngleStr = String(Angle, 1) + "°";
+		CurrentPhasor_x = ((int32_t)((PHASOR_RADIUS) * (cos((double)(TO_RAD(Angle))))));
+		CurrentPhasor_y = -((int32_t)((PHASOR_RADIUS) * (sin((double)(TO_RAD(Angle))))));
+		DBG(CurrentPhasor_x);
+		DBG(CurrentPhasor_y);
+		DBG(TO_RAD(Angle));
+		Display.drawLine(PHASOR_X, PHASOR_Y, PHASOR_X + CurrentPhasor_x, PHASOR_Y + CurrentPhasor_y, ILI9341_GREENYELLOW);
+		Display.setCursor(PHASOR_X + PHASOR_RADIUS + 10, PHASOR_Y  - 25);
+		Display.print("Angolo:");
+		Display.setCursor(PHASOR_X + PHASOR_RADIUS + 10, PHASOR_Y - 5);
+		Display.print(AngleStr.c_str());		
+	}
+}
 
 void DrawGraphicsPage()
 {
 	bool ExitGraphics = false;
-	uint8_t KeyPress = MAX_KEY;
+	uint8_t KeyPress = MAX_KEY, GraphicItem = 0, OldGraphicItem = 0;
 	ClearDisplay(false);
 	DisplayRefresh.restart();
 	DrawTopInfo();
@@ -1075,8 +1100,11 @@ void DrawGraphicsPage()
 		{
 			DrawTopInfo();
 			DrawNavButtons(DRAW_BACK);
-			Display.fillRect(GRAPHIC_X + 1, GRAPHIC_Y + 1, GRAPHIC_W - 1, GRAPHIC_H - 1, ILI9341_BLACK);
-			DrawGraph();
+			Display.fillRect(GRAPHIC_X + 1, GRAPHIC_Y + 1, GRAPHIC_W + 42, GRAPHIC_H - 1, ILI9341_BLACK);
+			if(GraphicItem == 0)
+				DrawWaveforms();
+			else
+				DrawPhasors();
 		}
 		Display.setFont(Arial_24_Bold);
 		Display.setTextColor(ILI9341_WHITE);
@@ -1086,8 +1114,16 @@ void DrawGraphicsPage()
 		switch(KeyPress)
 		{
 			case UP:	
+				if(GraphicItem > 0)
+					GraphicItem--;
+				else
+					GraphicItem = 1;
 				break;
 			case DOWN:		
+				if(GraphicItem < 1)
+					GraphicItem++;
+				else
+					GraphicItem = 0;			
 				break;
 			case OK:	
 				break;
@@ -1097,6 +1133,11 @@ void DrawGraphicsPage()
 				break;
 			default:
 				break;
+		}
+		if(OldGraphicItem != GraphicItem)
+		{
+			OldGraphicItem = GraphicItem;
+			ClearDisplay(false);
 		}
 	}		
 }
@@ -1286,17 +1327,28 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 
 	for(int i = 0; i < MAX_LOGS; i++)
 	{
-		if(MaxVal < (int32_t)LogBufferLocal[i].logMeasure)
-			MaxVal = (int32_t)LogBufferLocal[i].logMeasure;
+		if(LogBufferLocal[i].logMeasure >= 1)
+		{
+			if(MaxVal < (int32_t)LogBufferLocal[i].logMeasure)
+				MaxVal = (int32_t)LogBufferLocal[i].logMeasure;
+		}
+		else
+		{
+			if(MaxVal < (int32_t)(LogBufferLocal[i].logMeasure * 10))
+				MaxVal = (int32_t)(LogBufferLocal[i].logMeasure * 10);			
+		}
 
 	}
 
 	for(int i = 0; i < LOG_GRAPHIC_W; i++)
 	{
-		if((int32_t)LogBufferLocal[LogBufferIndex].logMeasure > 0)
-			y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		// if((int32_t)LogBufferLocal[LogBufferIndex].logMeasure > 0)
+			// y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H ) / MaxVal);
+		// else
+		if(LogBufferLocal[LogBufferIndex].logMeasure >= 1)
+			y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H / 3 ) / MaxVal);
 		else
-			y = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+			y = LOG_GRAPHIC_HALF - ((int32_t)(LogBufferLocal[MAX_LOGS - 1 - LogBufferIndex].logMeasure * 10) * (LOG_GRAPHIC_H / 3 ) / MaxVal);
 		Display.drawPixel(LOG_GRAPHIC_X + i, y, ILI9341_YELLOW);
 		if(i % 2 == 0)
 			LogBufferIndex++;
@@ -1361,8 +1413,10 @@ static void DrawGraphLog(LOGS_DEF *LogBufferLocal, bool CursorOn, uint16_t Curso
 			Display.setCursor(CENTER_ALIGN(LogMeasStr.c_str()), LOG_GRAPHIC_Y + LOG_GRAPHIC_H + 55);
 			Display.print(LogMeasStr.c_str());				
 		}
-		
-		y_cursor = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		if(LogBufferLocal[LogBufferIndex].logMeasure >= 1)
+			y_cursor = LOG_GRAPHIC_HALF - ((int32_t)LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * (LOG_GRAPHIC_H / 3) / MaxVal);
+		else
+			y_cursor = LOG_GRAPHIC_HALF - ((int32_t)(LogBufferLocal[MAX_LOGS - 1 - CursorPos].logMeasure * 10) * (LOG_GRAPHIC_H / 3) / MaxVal);
 		Display.drawFastHLine((CursorPos * 2) - 5  + LOG_GRAPHIC_X, y_cursor, 10, ILI9341_RED);
 		Display.drawFastVLine((CursorPos * 2)  + LOG_GRAPHIC_X, y_cursor - 5, 10, ILI9341_RED);
 	}
@@ -1932,7 +1986,7 @@ static void DrawReleStatisticsList()
 	DisplayRefresh.restart();
 	DrawTopInfo();
 	DrawNavButtons(DRAW_BACK);	
-	hour = Switch.powerOnTime / 3600;
+	hour = (Switch.powerOnTime / 3600) % 24;
 	min = (Switch.powerOnTime / 60) % 60;
 	sec = Switch.powerOnTime % 60;
 	day = Switch.powerOnTime / 86400;
@@ -1944,7 +1998,7 @@ static void DrawReleStatisticsList()
 	while(!ExitReleStatistics)
 	{
 		DoTasks();
-		hour = Switch.powerOnTime / 3600;
+		hour = (Switch.powerOnTime / 3600) % 24;
 		min = (Switch.powerOnTime / 60) % 60;
 		sec = Switch.powerOnTime % 60;
 		day = Switch.powerOnTime / 86400;

@@ -47,6 +47,10 @@
 #define GRAPHIC_H				190
 #define GRAPHIC_HALF			(GRAPHIC_Y + (GRAPHIC_H / 2))
 
+#define PHASOR_RADIUS			90
+#define PHASOR_X				(PHASOR_RADIUS + 1)
+#define PHASOR_Y				((MENU_TITLE_POS + 28) + PHASOR_RADIUS + 1)
+
 #define LOG_GRAPHIC_Y			(MENU_TITLE_POS + 50)
 #define LOG_GRAPHIC_W			256 
 #define LOG_GRAPHIC_X			((DISPLAY_WIDTH - 40 - LOG_GRAPHIC_W) / 2)
