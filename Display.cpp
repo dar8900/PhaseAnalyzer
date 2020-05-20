@@ -1068,7 +1068,7 @@ static void DrawPhasors()
 	Display.drawCircle(PHASOR_X, PHASOR_Y, PHASOR_RADIUS, ILI9341_WHITE);
 	Display.drawFastVLine(PHASOR_X, PHASOR_Y - PHASOR_RADIUS, PHASOR_RADIUS * 2, ILI9341_DARKGREY);
 	Display.drawFastHLine(PHASOR_X - PHASOR_RADIUS , PHASOR_Y, PHASOR_RADIUS * 2, ILI9341_DARKGREY);
-	if((int32_t)Current.actual != 0 && (int32_t)Pf.actual != PF_INVALID)
+	if((int32_t)(roundf(Current.actual * 10.0)) != 0 && (int32_t)Pf.actual != PF_INVALID)
 	{
 		Angle = (TO_GRAD(acos(Pf.actual)));
 		AngleStr = String(Angle, 1) + "°";
