@@ -2483,7 +2483,10 @@ static void ChangeValue(uint8_t SettingIndex)
 						ExitChangeValue = true;
 					}
 					else
+					{
 						DrawPopUp("Valore errato", 1000);
+						ExitChangeValue = true;
+					}
 				}
 				break;
 			case BACK:
