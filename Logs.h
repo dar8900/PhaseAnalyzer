@@ -61,6 +61,7 @@ extern bool EnableLog;
 extern bool EnableDailyEnergies;
 extern bool LogFull;
 extern const double *Measures4Log[];
+extern uint8_t DailyEnergiesSaveHour;
 
 void LogMeasure();
 void ReadAllLogs();

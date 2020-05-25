@@ -31,25 +31,26 @@ typedef enum
 	SET_LOG_TIME,                     //  2
 	SET_LOG_MEASURE,                  //  3
 	ENABLE_LOG_MEASURE,               //  4
-	ENABLE_LOG_DAILY_ENERGY,		  //  5     
-	ENABLE_SAVE_SWITCH_STATE,		  //  6
-	OVER_CURRENT_VALUE,               //  7
-	ENABLE_OVER_CURRENT,              //  8
-	UNDER_CURRENT_VALUE,              //  9
-	ENABLE_UNDER_CURRENT,             // 10
-	OVER_APP_POWER_VALUE,             // 11
-	ENABLE_OVER_PAPP_POWER,           // 12
-	UNDER_APP_POWER_VALUE,            // 13
-	ENABLE_UNDER_PAPP_POWER,          // 14
-	SET_SWITCH_ALARM,				  // 15
-	SWITCH_ALARM_ENABLE,			  // 16
-	ALARM_INSERT_DELAY,				  // 17
-	AVG_TIME,                         // 18
-	ENEGIES_SAVE_TIME,		  		  // 19	
-	CENT_PER_KVARH,					  // 20
-	ENABLE_ENERGY_AVG_CALC,			  // 21
-	SIMULATION_MODE,                  // 22
-	MAX_SETTINGS                      // 23
+	ENABLE_LOG_DAILY_ENERGY,		  //  5  
+	SET_SAVE_HOUR_DAILY_EN,			  //  6
+	ENABLE_SAVE_SWITCH_STATE,		  //  7
+	OVER_CURRENT_VALUE,               //  8
+	ENABLE_OVER_CURRENT,              //  9
+	UNDER_CURRENT_VALUE,              // 10
+	ENABLE_UNDER_CURRENT,             // 11
+	OVER_APP_POWER_VALUE,             // 12
+	ENABLE_OVER_PAPP_POWER,           // 13
+	UNDER_APP_POWER_VALUE,            // 14
+	ENABLE_UNDER_PAPP_POWER,          // 15
+	SET_SWITCH_ALARM,				  // 16
+	SWITCH_ALARM_ENABLE,			  // 17
+	ALARM_INSERT_DELAY,				  // 18
+	AVG_TIME,                         // 19
+	ENEGIES_SAVE_TIME,		  		  // 20	
+	CENT_PER_KVARH,					  // 21
+	ENABLE_ENERGY_AVG_CALC,			  // 22
+	SIMULATION_MODE,                  // 23
+	MAX_SETTINGS                      // 24
 }SETTINGS_LIST;
 
 

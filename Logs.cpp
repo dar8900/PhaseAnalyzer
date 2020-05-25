@@ -11,6 +11,7 @@ LOGS_DEF LogBuffer[MAX_LOGS];
 DAILY_ENERGIES_T DailyEnergies;
 uint16_t LastLogIndex;
 uint8_t MeasureToLog;
+uint8_t DailyEnergiesSaveHour = 0;
 bool EnableLog;
 bool EnableDailyEnergies;
 bool NotRewriteDailyEnergies = false;
@@ -146,7 +147,7 @@ void SaveDailyEnergies()
 	double DailyEnAppCopy = DailyEnApp;
 	if(Time.rtcStarted && EnableDailyEnergies)
 	{
-		if(Time.hour == 21 && Time.minute == 0 && Time.second == 0 && !NotRewriteDailyEnergies)
+		if(Time.hour == SettingsVals[SET_SAVE_HOUR_DAILY_EN] && Time.minute == 0 && Time.second == 0 && !NotRewriteDailyEnergies)
 		{
 			NotRewriteDailyEnergies = true;
 			if(DailyEnergies.lastDailyEnergyIndex != 0)
@@ -180,7 +181,7 @@ void SaveDailyEnergies()
 			// DBG("LastDayIndex: " + String(DailyEnergies.lastDailyEnergyIndex));
 			// #endif			
 		}
-		else if(Time.hour == 21 && Time.minute == 0 && Time.second != 0)
+		else if(Time.hour == SettingsVals[SET_SAVE_HOUR_DAILY_EN] && Time.minute == 0 && Time.second != 0)
 		{
 			NotRewriteDailyEnergies = false;
 		}

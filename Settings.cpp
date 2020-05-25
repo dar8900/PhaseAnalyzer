@@ -9,30 +9,31 @@ int32_t SettingsVals[MAX_SETTINGS];
 
 const int32_t SettingsDefVal[MAX_SETTINGS] = 
 {
-	0,						//CHANGE_TIME,                         //  0
-	0,						//CHANGE_DATE,                         //  1
-	900,					//SET_LOG_TIME,                        //  2
-	CURRENT_LOG,			//SET_LOG_MEASURE,                     //  3
-	DISABLED,				//ENABLE_LOG_MEASURE,                  //  4
-	ENABLED,				//ENABLE_LOG_DAILY_ENERGY, 	           //  5
-	DISABLED,				//ENABLE_SAVE_SWITCH_STATE, 	       //  6
-	10000,					//OVER_CURRENT_VALUE,                  //  7
-	DISABLED,				//ENABLE_OVER_CURRENT,                 //  8
-	1000,					//UNDER_CURRENT_VALUE,                 //  9
-	DISABLED,				//ENABLE_UNDER_CURRENT,                // 10
-	2000,					//OVER_ATT_POWER_VALUE,                // 11
-	DISABLED,				//ENABLE_OVER_PATT_POWER,              // 12
-	500,					//UNDER_ATT_POWER_VALUE,               // 13
-	DISABLED,				//ENABLE_UNDER_PATT_POWER,             // 14
-	NONE,					//SET_SWITCH_ALARM                     // 15
-	DISABLED,               //SWITCH_ALARM_ENABLE                  // 16
-	5,						//ALARM_INSERT_DELAY                   // 17
-	1,						//AVG_TIME,                            // 18
-	15,						//ENEGIES_SAVE_TIME,    	           // 19
-	20,                     //CENT_PER_KVARH,				       // 20
-	ENABLED,				//ENABLE_ENERGY_AVG_CALC,	    	   // 21
-	DISABLED,				//SIMULATION_MODE,                     // 22
-};                                                                    
+	0,						// CHANGE_TIME = 0,                   //  0
+	0,						// CHANGE_DATE,                       //  1
+	900,					// SET_LOG_TIME,                      //  2
+	CURRENT_LOG,			// SET_LOG_MEASURE,                   //  3
+	DISABLED,				// ENABLE_LOG_MEASURE,                //  4
+	ENABLED,				// ENABLE_LOG_DAILY_ENERGY,		      //  5
+	0,					    // SET_SAVE_HOUR_DAILY_EN,			  //  6
+	DISABLED,				// ENABLE_SAVE_SWITCH_STATE,		  //  7
+	10000,					// OVER_CURRENT_VALUE,                //  8
+	DISABLED,				// ENABLE_OVER_CURRENT,               //  9
+	1000,					// UNDER_CURRENT_VALUE,               // 10
+	DISABLED,				// ENABLE_UNDER_CURRENT,              // 11
+	2000,					// OVER_APP_POWER_VALUE,              // 12
+	DISABLED,				// ENABLE_OVER_PAPP_POWER,            // 13
+	500,					// UNDER_APP_POWER_VALUE,             // 14
+	DISABLED,				// ENABLE_UNDER_PAPP_POWER,           // 15
+	NONE,					// SET_SWITCH_ALARM,				  // 16
+	DISABLED,               // SWITCH_ALARM_ENABLE,			      // 17
+	5,						// ALARM_INSERT_DELAY,				  // 18
+	1,						// AVG_TIME,                          // 19
+	15,						// ENEGIES_SAVE_TIME,		  		  // 20
+	20,                     // CENT_PER_KVARH,					  // 21
+	ENABLED,				// ENABLE_ENERGY_AVG_CALC,			  // 22
+	DISABLED,				// SIMULATION_MODE,                   // 23
+};                                                                
 
 
 const ENUM_VAL LogMeasureEnum[MAX_MEASURE_LOG] = 
@@ -123,6 +124,7 @@ const SETTING_DEF Settings[MAX_SETTINGS] =
 	{&SettingsVals[SET_LOG_MEASURE]		    	, CURRENT_LOG		 , MAX_MEASURE_LOG - 1  	, ENUM_TYPE , LogMeasureEnum             , ""    , "Misura di log"		     },
 	{&SettingsVals[ENABLE_LOG_MEASURE]    		, DISABLED		     , ENABLED 					, ENUM_TYPE , LogEnable			         , ""    , "Abilita log"			     },
 	{&SettingsVals[ENABLE_LOG_DAILY_ENERGY] 	, DISABLED		     , ENABLED 					, ENUM_TYPE , DailyEnergiesLogEnable     , ""    , "Abilita en.app giorn."    },
+	{&SettingsVals[SET_SAVE_HOUR_DAILY_EN]		, 0			 		 , 23 				    	, VALUE_TYPE, NULL				         , "h"   , "Ora salvataggio E.G."		     },
 	{&SettingsVals[ENABLE_SAVE_SWITCH_STATE] 	, DISABLED		     , ENABLED 					, ENUM_TYPE , EnableSaveSwitchState      , ""    , "Salva stato presa"        },
 	{&SettingsVals[OVER_CURRENT_VALUE]      	, 1000		 		 , 15000		 	    	, VALUE_TYPE, NULL				         , "mA"  , "Sovra corrente"		     },
 	{&SettingsVals[ENABLE_OVER_CURRENT]     	, DISABLED			 , ENABLED  				, ENUM_TYPE , OverCurrentEnableEnum      , ""    , "Abilita sovra corrente"   },

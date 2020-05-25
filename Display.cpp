@@ -2480,6 +2480,11 @@ static void ChangeValue(uint8_t SettingIndex)
 						*(int32_t*)Settings[SettingIndex].settingVal = NewValue;
 						WriteSetting(SettingIndex, NewValue);
 						DrawPopUp("Valore salvato", 1000);
+						if(SettingIndex == SET_SAVE_HOUR_DAILY_EN)
+						{
+							DrawInfoPopUp("Reset en. giorn.", 1500);
+							ResetDailyEnergies();
+						}
 						ExitChangeValue = true;
 					}
 					else
