@@ -57,6 +57,7 @@ ADC::Sync_result SyncroMeasureResult;
 
 static double CurrentAvgAcc, VoltageAvgAcc, PfAvgAcc, PAttAvgAcc, PReaAvgAcc, PAppAvgAcc;
 static uint32_t CurrentAvgCnt, VoltageAvgCnt, PfAvgCnt, PAttAvgCnt, PReaAvgCnt, PAppAvgCnt;
+static double CurrentBias = 0.0;
 
 static bool InvalidPf;
 
@@ -82,6 +83,7 @@ double CurrentCorrection;
 
 bool EnableCalcEnergyAvg = false;
 bool simulationMode = SIM_ON;
+bool CalcCurrent = false;
 
 Chrono AvgTimer_1(Chrono::SECONDS), AvgTimer_2, EnergyTimer, FirstCalcMaxMinTimer;
 
@@ -275,7 +277,7 @@ void AcdCallBackFunc()
 		SyncroMeasureResult = adc->analogSynchronizedRead(VOLTAGE_PIN, CURRENT_PIN);
 		CurrentRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc1;
 		VoltageRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc0;
-		if((VoltageRawVal[AcdBufferIndex] > 1800 && VoltageRawVal[AcdBufferIndex] < 1850) && !StartCollecting)
+		// if((VoltageRawVal[AcdBufferIndex] > 1800 && VoltageRawVal[AcdBufferIndex] < 1850) && !StartCollecting)
 			StartCollecting = true;
 		if(StartCollecting)
 		{
@@ -290,7 +292,7 @@ void AcdCallBackFunc()
 	}
 }
 
-
+double CurrentBiasTmp = 0.0;
 void GetMeasure()
 {
 	double CurrentBiased = 0.0, VoltageBiased = 0.0;
@@ -302,16 +304,30 @@ void GetMeasure()
 	{
 		if(BuffersFilled)
 		{
-			for(int i = 0; i < N_SAMPLE; i++)
+			if(CalcCurrent)
 			{
-				CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CURRENT_BIAS);
-				VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
-				// DBG("Current Raw: ," + String(CurrentBiased));
-				TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
-				TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * VOLTAGE_CORRECTION);
-				PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
-				CurrentAcc += (CurrentBiased * CurrentBiased);
-				VoltageAcc += (VoltageBiased * VoltageBiased);
+				for(int i = 0; i < N_SAMPLE; i++)
+				{
+					CurrentBiased = CurrentRawVal[i] - TO_ADC_VAL(CurrentBias);
+					VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
+					// DBG("Current Raw: ," + String(CurrentBiased));
+					// TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
+					TmpCurrentCalc = (((sqrt(CurrentBiased * CurrentBiased) * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO);
+					TmpVoltageCalc = (sqrt(VoltageBiased * VoltageBiased) * VOLTAGE_CORRECTION);
+					PAttAcc += (TmpCurrentCalc * TmpVoltageCalc);
+					CurrentAcc += (CurrentBiased * CurrentBiased);
+					VoltageAcc += (VoltageBiased * VoltageBiased);
+				}
+			}
+			else
+			{
+				for(int i = 0; i < N_SAMPLE; i++)
+				{
+					CurrentBiasTmp += (CurrentRawVal[i] * VOLT_ADCVAL_CONV);
+					CurrentAcc = 0.0;
+					VoltageBiased = VoltageRawVal[i] - TO_ADC_VAL(VOLTAGE_BIAS);
+					VoltageAcc += (VoltageBiased * VoltageBiased);
+				}				
 			}
 			NWindows++;	
 			if(NWindows >= MAX_WINDOWS)
@@ -327,11 +343,17 @@ void GetMeasure()
 				
 				CurrentAcc = 0.0;
 				VoltageAcc = 0.0;
-				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
+				// Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
+				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO);
 				Voltage.actual = sqrtVoltage * VOLTAGE_CORRECTION; 
 				// DBG(sqrtVoltage);
 				if(!Switch.isActive)
 				{
+					CalcCurrent = false;
+					CurrentBiasTmp /= (N_SAMPLE * MAX_WINDOWS);
+					CurrentBias = CurrentBiasTmp;
+					CurrentBiasTmp = 0.0;
+					DBG("CurrentBias: " + String(CurrentBias));
 					CurrentCorrection = CURRENT_CORRECTION;
 					Current.actual = 0.0;
 					if(Voltage.actual < TARP_V)
@@ -341,7 +363,8 @@ void GetMeasure()
 				}
 				else
 				{
-					CurrentCorrection = CURRENT_CORRECTION_SW_ACTIVE;
+					CalcCurrent = true;
+					// CurrentCorrection = CURRENT_CORRECTION_SW_ACTIVE;
 					if(Current.actual < TARP_I)
 					{
 						Current.actual = 0.0;
