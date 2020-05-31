@@ -345,7 +345,9 @@ void GetMeasure()
 				VoltageAcc = 0.0;
 				// Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO) - CurrentCorrection;
 				Current.actual = (((sqrtCurrent * VOLT_ADCVAL_CONV) / BURDEN_RESISTOR) * TA_TURN_RATIO);
+				Current.actual = (roundf(Current.actual * 100.0)) / 100.0;
 				Voltage.actual = sqrtVoltage * VOLTAGE_CORRECTION; 
+				Voltage.actual = roundf(Voltage.actual);
 				// DBG(sqrtVoltage);
 				if(!Switch.isActive)
 				{

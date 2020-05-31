@@ -124,6 +124,9 @@ void ResetSavedEnergies()
 	EEPROM.put(APPARENT_ENERGY_SAVE_ADDR, EnApp.actual);
 	EEPROM.put(ACTIVE_ENERGY_SAVE_ADDR, EnAtt.actual);
 	EEPROM.put(REACTIVE_ENERGY_SAVE_ADDR, EnRea.actual);
+	EEPROM.put(APPARENT_ENERGY_F1_SAVE_ADDR, (float)EnAppF1.actual);
+	EEPROM.put(APPARENT_ENERGY_F2_SAVE_ADDR, (float)EnAppF2.actual);
+	EEPROM.put(APPARENT_ENERGY_F3_SAVE_ADDR, (float)EnAppF3.actual);
 }
 
 void ReadSavedEnergies()
