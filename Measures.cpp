@@ -277,7 +277,7 @@ void AcdCallBackFunc()
 		SyncroMeasureResult = adc->analogSynchronizedRead(VOLTAGE_PIN, CURRENT_PIN);
 		CurrentRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc1;
 		VoltageRawVal[AcdBufferIndex] = (double) SyncroMeasureResult.result_adc0;
-		// if((VoltageRawVal[AcdBufferIndex] > 1800 && VoltageRawVal[AcdBufferIndex] < 1850) && !StartCollecting)
+		if((VoltageRawVal[AcdBufferIndex] > 1800 && VoltageRawVal[AcdBufferIndex] < 1850) && !StartCollecting)
 			StartCollecting = true;
 		if(StartCollecting)
 		{
@@ -367,7 +367,7 @@ void GetMeasure()
 				{
 					CalcCurrent = true;
 					// CurrentCorrection = CURRENT_CORRECTION_SW_ACTIVE;
-					if(Current.actual < TARP_I)
+					if(Current.actual < (((double)SettingsVals[TARP_CURRENT]) / 1000))
 					{
 						Current.actual = 0.0;
 						PAtt.actual = 0.0;

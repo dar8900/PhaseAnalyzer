@@ -49,8 +49,9 @@ typedef enum
 	ENEGIES_SAVE_TIME,		  		  // 20	
 	CENT_PER_KVARH,					  // 21
 	ENABLE_ENERGY_AVG_CALC,			  // 22
-	SIMULATION_MODE,                  // 23
-	MAX_SETTINGS                      // 24
+	TARP_CURRENT,					  // 23
+	SIMULATION_MODE,                  // 24
+	MAX_SETTINGS                      // 25
 }SETTINGS_LIST;
 
 

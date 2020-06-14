@@ -32,7 +32,8 @@ const int32_t SettingsDefVal[MAX_SETTINGS] =
 	15,						// ENEGIES_SAVE_TIME,		  		  // 20
 	20,                     // CENT_PER_KVARH,					  // 21
 	ENABLED,				// ENABLE_ENERGY_AVG_CALC,			  // 22
-	DISABLED,				// SIMULATION_MODE,                   // 23
+	130,                    // TARP_CURRENT,					  // 23
+	DISABLED,				// SIMULATION_MODE,                   // 24
 };                                                                
 
 
@@ -141,5 +142,6 @@ const SETTING_DEF Settings[MAX_SETTINGS] =
 	{&SettingsVals[ENEGIES_SAVE_TIME]	        , 1					 , 30   					, VALUE_TYPE, NULL					     , "min" , "Tempo salvataggio en."    },
 	{&SettingsVals[CENT_PER_KVARH]	            , 0					 , 100   					, VALUE_TYPE, NULL					     , "cent", "Euro per kVAH"           },
 	{&SettingsVals[ENABLE_ENERGY_AVG_CALC]  	, DISABLED			 , ENABLED    				, ENUM_TYPE , EnableCalcEnergyAvgSetting , ""    , "Calcolo energie/avg"	     },
+	{&SettingsVals[TARP_CURRENT]	            , 50			     , 1000   					, VALUE_TYPE, NULL					     , "mA"  , "Corrente di tarpamento"   },
 	{&SettingsVals[SIMULATION_MODE]  			, DISABLED			 , ENABLED    				, ENUM_TYPE , SimulationEnabledEnum      , ""    , "Abilita simulazione"	     },
 };
